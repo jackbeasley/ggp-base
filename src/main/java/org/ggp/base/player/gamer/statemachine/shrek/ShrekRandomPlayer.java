@@ -40,35 +40,7 @@ public class ShrekRandomPlayer extends StateMachineGamer {
 		return moves.get((new Random()).nextInt(moves.size()));
 	}
 
-	//play function
-	//bestMove function
-	public Move bestMove (Role role, MachineState state)
-	{
-		StateMachine machine = getStateMachine();
-		List <Move> moves = machine.getLegalMoves(state, role);
-		Move bestMove = null;
-		int highestScore = 0;
 
-		//can return null
-		for (int i = 0; i < moves.size(); i++)
-		{
-			int currentScore = maxscore (role, simulate([moves[i]], state));
-			if (currentScore == 100)
-				return moves[i];
-			if (currentScore > highestScore)
-			{
-				highestScore = currentScore;
-				bestMove = moves[i];
-			}
-		}
-		return bestMove;
-	}
-
-	//maxscore is recursive exploration of the game tree
-	public int maxScore (Role role, State state)
-	{
-
-	}
 
 	@Override
 	public void stateMachineStop() {
