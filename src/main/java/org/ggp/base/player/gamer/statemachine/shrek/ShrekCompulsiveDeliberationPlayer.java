@@ -41,6 +41,7 @@ public class ShrekCompulsiveDeliberationPlayer extends StateMachineGamer {
 		int score = 0;
 		for (int i = 0; i<moves.size();i++){
 			List<Move> simulatedMove = new ArrayList<Move>();
+			// Single player so we will always be role 0
 			simulatedMove.add(moves.get(i));
 			int result = maxscore(machine,machine.getNextState(state, simulatedMove), role);
 			if (result == 100) return moves.get(i);
