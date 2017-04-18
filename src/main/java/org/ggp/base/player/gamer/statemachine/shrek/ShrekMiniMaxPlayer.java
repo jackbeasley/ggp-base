@@ -45,7 +45,7 @@ public class ShrekMiniMaxPlayer extends StateMachineGamer {
 		for (int i = 0; i<moves.size();i++){
 			List<Move> simulatedMove = new ArrayList<Move>();
 			simulatedMove.add(moves.get(i));
-			int result = maxscore(machine,machine.getNextState(state, simulatedMove), role);
+			int result = maxScore(machine.getNextState(state, simulatedMove), role);
 			if (result == 100) return moves.get(i);
 			if (result > score){
 				score = result;
@@ -68,63 +68,49 @@ public class ShrekMiniMaxPlayer extends StateMachineGamer {
 		return null;
 	}
 
-	private int minScore(Role role, Move move, MachineState state)
+	private int minScore(MachineState state, Role role, Move move)
 				throws MoveDefinitionException, TransitionDefinitionException, GoalDefinitionException
 	{
 		StateMachine machine = getStateMachine();
 
-
-		// Get opponents
-		List<Role> roles = machine.getRoles();
-
 		int score = 100;
 
-		List<List<Move>> legalMoves = new ArrayList<List<Move>>();
+		// Other players should have noop as legal move
+		List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, move);
 
-		// Create a list of lists that contains the possible moves for each role
-		for (int roleid = 0; roleid < roles.size(); roleid++)
-		{
-			if (roles.get(roleid) == role)
-			{
-				List<Move> possibleMove = new ArrayList<Move>();
-				possibleMove.add(move);
-				legalMoves.set(roleid, possibleMove);
-			} else {
-				legalMoves.set(roleid, machine.getLegalMoves(state, roles.get(roleid)));
+		// Loop though all sets of legal moves for each role
+		for (List<Move> legalMoveSet : legalMoves) {
+			MachineState simState = machine.getNextState(state, legalMoveSet);
+			int highest = maxScore(simState, role);
+			if (highest == 0) {
+				return 0;
+			} else if (highest < score) {
+				score = highest;
 			}
 		}
 
-		for (List<Move> list : legalMoves)
-		{
-			for
-		}
-
-
-		// Get the next state if legalMove is made
-		List<Move> simMove = new ArrayList<Move>();
-		simMove.add(move);
-		simMove.add(legalMove);
-		MachineState simState = machine.getNextState(state, simMove);
-
-		int highest = maxScore(machine, simState, opponent);
-		if (highest < score)
-		{
-			score = highest;
-		}
 		return score;
 	}
 
-	private int maxScore(StateMachine machine,MachineState state,Role role) throws GoalDefinitionException, MoveDefinitionException, TransitionDefinitionException{
+	private int maxScore(MachineState state, Role role) throws GoalDefinitionException, MoveDefinitionException, TransitionDefinitionException{
+
+		StateMachine machine = getStateMachine();
 		if(machine.isTerminal(state)){
 			return machine.getGoal(state, role);
 		}
-		List<Move>moves = machine.getLegalMoves(state,role);
+
+
+		List<Move> moves = machine.getLegalMoves(state,role);
 		int score = 0;
-		for(int i = 0; i<moves.size();i++){
-			List<Move> simulatedMove = new ArrayList<Move>();
-			simulatedMove.add(moves.get(i));
-			int result = maxscore(machine,machine.getNextState(state, simulatedMove),role);
-			if(result > score) score = result;
+		for(Move legalMove : moves){
+
+			List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, legalMove);
+			for (List<Move> moveSet : legalMoves) {
+				int result = minScore(machine.getNextState(state, moveSet), role, legalMove);
+
+				if(result > score) score = result;
+			}
+
 		}
 		return score;
 	}
