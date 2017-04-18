@@ -51,13 +51,12 @@ public class OCDShrek extends StateMachineGamer {
 			//can return null
 			for (int i = 0; i < moves.size(); i++)
 			{
-				int currentScore = maxscore (role, simulate([moves[i]], state));
-				if (currentScore == 100)
-					return moves[i];
-				if (currentScore > highestScore)
-				{
+				int currentScore = maxScore (role, simulate(moves.get(i), state));
+				if (currentScore == 100) {
+					return moves.get(i);
+				} else if (currentScore > highestScore) {
 					highestScore = currentScore;
-					bestMove = moves[i];
+					bestMove = moves.get(i);
 				}
 			}
 			return bestMove;
@@ -65,8 +64,32 @@ public class OCDShrek extends StateMachineGamer {
 
 	// maxscore is recursive exploration of the game tree
 	public int maxScore(Role role, MachineState state) {
+		StateMachine machine = getStateMachine();
+		if (machine.isTerminal(state))
+		{
+			// The score for the role in the current state
+			return score(state);
+		} else {
+			List<Move> moves = machine.getLegalMoves(state, role);
+			int score = 0;
+			for (Move move : moves)
+			{
+				int nextScore = maxScore(role, simulate(move, state));
+				if (nextScore > score)
+				{
+					score = nextScore;
+				}
+			}
+			return score;
+		}
+	}
 
-		return 0;
+	/*
+	 * Should apply the move to the state and return the resulting sttae
+	 */
+	public MachineState simulate(Move move, MachineState state)
+	{
+		return state;
 	}
 
 	@Override
