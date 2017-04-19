@@ -53,26 +53,18 @@ public class ShrekMiniMaxPlayer extends StateMachineGamer {
 		int score = 0;
 
 		for(Move legalMove : moves){
-
 			List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, legalMove);
-			System.out.println("bestMove: " + legalMoves);
-
-
-			for (List<Move> moveSet : legalMoves) {
-				int result = minScore(machine.getNextState(state, moveSet), role, legalMove);
-				if (result > score){
-					score = result;
-					bestMove = legalMove;
-				}
+			int result = minScore(state, role, legalMove);
+			if (result > score){
+				score = result;
+				bestMove = legalMove;
 			}
-
 		}
-
 		return bestMove;
 	}
 
 	private int minScore(MachineState state, Role role, Move move)
-				throws MoveDefinitionException, TransitionDefinitionException, GoalDefinitionException
+			throws MoveDefinitionException, TransitionDefinitionException, GoalDefinitionException
 	{
 		StateMachine machine = getStateMachine();
 
@@ -80,7 +72,6 @@ public class ShrekMiniMaxPlayer extends StateMachineGamer {
 
 		// Other players should have noop as legal move
 		List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, move);
-		System.out.println("minScore: " + legalMoves);
 
 		// Loop though all sets of legal moves for each role
 		for (List<Move> legalMoveSet : legalMoves) {
@@ -98,13 +89,9 @@ public class ShrekMiniMaxPlayer extends StateMachineGamer {
 
 	private int maxScore(MachineState state, Role role)
 			throws GoalDefinitionException, MoveDefinitionException, TransitionDefinitionException{
-
 		StateMachine machine = getStateMachine();
-		if(machine.isTerminal(state)){
-			System.out.println("Terminator");
-			return machine.getGoal(state, role);
-		}
 
+		if(machine.isTerminal(state)) return machine.getGoal(state, role);
 
 		List<Move> moves = machine.getLegalMoves(state,role);
 		int score = 0;
