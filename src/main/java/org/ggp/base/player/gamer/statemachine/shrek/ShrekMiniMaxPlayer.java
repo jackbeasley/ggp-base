@@ -1,6 +1,5 @@
 package org.ggp.base.player.gamer.statemachine.shrek;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.ggp.base.player.gamer.exception.GamePreviewException;
@@ -39,33 +38,37 @@ public class ShrekMiniMaxPlayer extends StateMachineGamer {
 		StateMachine machine = getStateMachine();
 		MachineState state = getCurrentState();
 		Role role = getRole();
-		List<Move> moves = machine.getLegalMoves(state,role);
-		Move move = moves.get(0);
-		int score = 0;
-		for (int i = 0; i<moves.size();i++){
-			List<Move> simulatedMove = new ArrayList<Move>();
-			simulatedMove.add(moves.get(i));
-			int result = maxScore(machine.getNextState(state, simulatedMove), role);
-			if (result == 100) return moves.get(i);
-			if (result > score){
-				score = result;
-				move = moves.get(i);
-			}
-		}
-		return move;
+		return bestMove(role, state);
+
 	}
 
-	private Move bestMove(Role role, MachineState state) throws MoveDefinitionException
+	private Move bestMove(Role role, MachineState state)
+			throws MoveDefinitionException, TransitionDefinitionException, GoalDefinitionException
 	{
 		StateMachine machine = getStateMachine();
-		List<Move> legalMoves = machine.getLegalMoves(state, role);
 
+		List<Move> moves = machine.getLegalMoves(state,role);
+
+		Move bestMove = null;
 		int score = 0;
-		for (Move move : legalMoves)
-		{
+
+		for(Move legalMove : moves){
+
+			List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, legalMove);
+			System.out.println(legalMoves);
+
+
+			for (List<Move> moveSet : legalMoves) {
+				int result = minScore(machine.getNextState(state, moveSet), role, legalMove);
+				if (result > score){
+					score = result;
+					bestMove = legalMove;
+				}
+			}
 
 		}
-		return null;
+
+		return bestMove;
 	}
 
 	private int minScore(MachineState state, Role role, Move move)
@@ -77,6 +80,7 @@ public class ShrekMiniMaxPlayer extends StateMachineGamer {
 
 		// Other players should have noop as legal move
 		List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, move);
+		System.out.println(legalMoves);
 
 		// Loop though all sets of legal moves for each role
 		for (List<Move> legalMoveSet : legalMoves) {
@@ -105,6 +109,9 @@ public class ShrekMiniMaxPlayer extends StateMachineGamer {
 		for(Move legalMove : moves){
 
 			List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, legalMove);
+
+			System.out.println(legalMoves);
+
 			for (List<Move> moveSet : legalMoves) {
 				int result = minScore(machine.getNextState(state, moveSet), role, legalMove);
 
