@@ -16,7 +16,7 @@ import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 
-public class ShrekGoalProximityPlayer extends StateMachineGamer {
+public class ShrekOpponentHeuristicPlayer extends StateMachineGamer {
 	List<Role> roles;
 	List<MachineState> terminalStates = new ArrayList<MachineState>();
 
@@ -109,11 +109,25 @@ public class ShrekGoalProximityPlayer extends StateMachineGamer {
 		}
 		return score;
 	}
-	//goal proximity heuristic
-	private int evalfn(Role role, MachineState state) throws MoveDefinitionException, GoalDefinitionException{
-		return getStateMachine().getGoal(state, role);
+
+	private int evalfn(Role role, MachineState state) throws MoveDefinitionException{
+		StateMachine machine = getStateMachine();
+		List<Role> roles = machine.getRoles();
+		int mobility = 0;
+		for(Role curRole : roles){
+			if(!curRole.equals(role)){
+				mobility+=getMobility(curRole,state);
+			}
+		}
+		return mobility/roles.size();
 	}
 
+	private int getMobility(Role role,MachineState state) throws MoveDefinitionException{
+		List<Move> moves = getStateMachine().getLegalMoves(state,role);
+		List<Move> feasibles = getStateMachine().findActions(role);
+		double val = ((double)moves.size()/(double)feasibles.size())*100.0;
+		return (int)val;
+	}
 
 
 
@@ -137,7 +151,7 @@ public class ShrekGoalProximityPlayer extends StateMachineGamer {
 
 	@Override
 	public String getName() {
-		return "GoalProximity Shrek";
+		return "Opponent Heuristic Shrek";
 	}
 
 }

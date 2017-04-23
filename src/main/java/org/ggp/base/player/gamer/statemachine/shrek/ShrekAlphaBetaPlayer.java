@@ -39,7 +39,6 @@ public class ShrekAlphaBetaPlayer extends StateMachineGamer {
 	@Override
 	public Move stateMachineSelectMove(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-		StateMachine machine = getStateMachine();
 		MachineState state = getCurrentState();
 		Role role = getRole();
 		return bestMove(role, state);
