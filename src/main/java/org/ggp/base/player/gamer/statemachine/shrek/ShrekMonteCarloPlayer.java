@@ -3,6 +3,7 @@ package org.ggp.base.player.gamer.statemachine.shrek;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.ggp.base.player.gamer.exception.GamePreviewException;
 import org.ggp.base.player.gamer.statemachine.StateMachineGamer;
@@ -19,11 +20,11 @@ import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 
 public class ShrekMonteCarloPlayer extends StateMachineGamer {
 	List<Role> roles;
-	long timeout;
+	static long timeout;
 	long startTime;
 
 	private static final int WINNING_SCORE = 100;
-	private static final Duration TIME_TO_DECIDE = Duration.ofSeconds(8);
+	private static final Duration TIME_TO_DECIDE = Duration.ofSeconds(18);
 
 	@Override
 	public StateMachine getInitialStateMachine() {
@@ -47,7 +48,7 @@ public class ShrekMonteCarloPlayer extends StateMachineGamer {
 		this.startTime = System.currentTimeMillis();
 		MachineState state = getCurrentState();
 		Role role = getRole();
-
+		System.out.println(TimeUnit.MILLISECONDS.toSeconds(timeout));
 		// Get the start time to pass around so we can calculate elapsed time
 		Instant startTime = Instant.now();
 		return bestMove(role, state, startTime);
@@ -112,10 +113,14 @@ public class ShrekMonteCarloPlayer extends StateMachineGamer {
 		if(machine.isTerminal(state)) {
 			return machine.getGoal(state, role);
 		}
-		if (Duration.between(startTime, Instant.now()).compareTo(TIME_TO_DECIDE) < 0) {
-			return monteCarlo(state,role,depth_limit);
+		if (Duration.between(startTime, Instant.now()).compareTo(TIME_TO_DECIDE) > 0) {
+			long curTime = System.currentTimeMillis();
+
+			System.out.println(curTime);
+			System.out.println(System.currentTimeMillis()+ "\n");
+			return monteCarlo(state,role,depth_limit)/7;
 		}
-		if (level>=depth_limit) {return monteCarlo(state,role,depth_limit);};
+		if (level>=depth_limit) {return monteCarlo(state,role,depth_limit+3);};
 		List<Move> moves = machine.getLegalMoves(state,role);
 		int score = 0;
 		for(Move legalMove : moves){
@@ -134,8 +139,6 @@ public class ShrekMonteCarloPlayer extends StateMachineGamer {
 		}
 		return total/count;
 	}
-
-
 
 	@Override
 	public void stateMachineStop() {
