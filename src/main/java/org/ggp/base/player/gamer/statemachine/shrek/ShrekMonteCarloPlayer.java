@@ -64,13 +64,12 @@ public class ShrekMonteCarloPlayer extends StateMachineGamer {
 
 		Move bestMove = null;
 		int score = 0;
-		int start_level = 0;
 
 		for(Move legalMove : moves){
-			Instant start = Instant.now();
+			//Instant start = Instant.now();
 			int result = minScore(state, role, legalMove, 0, startTime);
-			Instant after = Instant.now();
-			Duration minScoreTime = Duration.between(start, after);
+			//Instant after = Instant.now();
+			//Duration minScoreTime = Duration.between(start, after);
 			if (result > score) {
 				score = result;
 				bestMove = legalMove;
@@ -139,6 +138,47 @@ public class ShrekMonteCarloPlayer extends StateMachineGamer {
 		}
 		return total/count;
 	}
+
+	@SuppressWarnings("unused")
+	private MachineState selectMonteCarlo (MachineState state) throws MoveDefinitionException, TransitionDefinitionException
+	{
+		//instantiate machine, result to return, and list of possible machineStates
+		StateMachine machine = getStateMachine();
+		List<MachineState> machineStates = machine.getNextStates (state);
+		MachineState result;
+
+		//if #of visits to current state is 0, return the node
+		if (state.getVisits() == 0) return state;
+
+		//else search through machine states
+		for (MachineState child: machineStates)
+		{
+			if (child.getVisits() == 0) return child;
+		}
+
+		int score = 0;
+		result = state;
+
+		//if not, use selectfn to do stuff
+		for (MachineState child: machineStates)
+		{
+			int newScore = selectFn(child, state);
+			if (newScore > score)
+			{
+				score = newScore;
+				return child;
+			}
+		}
+		//increase visits
+		state.setVisits(state.getVisits()+1);
+		return selectMonteCarlo(result);
+	}
+
+	private int selectFn (MachineState state, MachineState parent)
+	{
+		return (int) ((state.getUtility()/state.getVisits()) + Math.sqrt(2*Math.log(parent.getVisits())/state.getVisits()));
+	}
+
 
 	@Override
 	public void stateMachineStop() {
