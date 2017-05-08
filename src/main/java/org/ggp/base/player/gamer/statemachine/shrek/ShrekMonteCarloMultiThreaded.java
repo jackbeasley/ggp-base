@@ -4,6 +4,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.logging.Logger;
 
 import org.ggp.base.player.gamer.exception.GamePreviewException;
 import org.ggp.base.player.gamer.statemachine.StateMachineGamer;
@@ -18,18 +23,16 @@ import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 
+
 public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
-	List<Role> roles;
-	long timeout;
-	long startTime;
+
+	private static final Logger LOGGER = Logger.getLogger(ShrekMonteCarloMultiThreaded.class.getName());
 
 	static CountDownLatch latch;
 
 	@Override
 	public StateMachine getInitialStateMachine() {
 		StateMachine machine = new CachedStateMachine(new ProverStateMachine());
-		roles = machine.getRoles();
-
 		return machine;
 	}
 
@@ -43,8 +46,6 @@ public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
 	@Override
 	public Move stateMachineSelectMove(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-		this.timeout = timeout;
-		this.startTime = System.currentTimeMillis();
 		MachineState state = getCurrentState();
 		Role role = getRole();
 
@@ -59,33 +60,32 @@ public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
 	{
 		StateMachine machine = getStateMachine();
 
+		ExecutorService es = Executors.newFixedThreadPool(2);
+
 		List<Move> moves = machine.getLegalMoves(state,role);
 		List<Move> firstHalfMoves = new ArrayList<Move>(moves);
-		List<Move> secondHalfMoves = split(firstHalfMoves,moves.size()/2);
-		System.out.println(firstHalfMoves.size());
-		System.out.println(moves.size());
-		BestMove firstBest = new BestMove();
-		BestMove secondBest = new BestMove();
+		List<Move> secondHalfMoves = split(firstHalfMoves,moves.size() / 2);
 
-		latch = new CountDownLatch(2);
-
-		BestMoveDeciderThread firstHalf  = new BestMoveDeciderThread(role, state,startTime,machine, firstHalfMoves,firstBest,latch);
-		BestMoveDeciderThread secondHalf  = new BestMoveDeciderThread(role, state,startTime,machine, secondHalfMoves,secondBest,latch);
-
-		firstHalf.start();
-		secondHalf.start();
+		Future<BestMove> firstHalfBest = es.submit(new BestMoveCalculator(machine, state, startTime, role, firstHalfMoves));
+		Future<BestMove> secondHalfBest = es.submit(new BestMoveCalculator(machine, state, startTime, role, secondHalfMoves));
 
 		try {
-			latch.await();
+			BestMove firstBest = firstHalfBest.get();
+			BestMove secondBest = secondHalfBest.get();
+			if(firstBest.getScore()>secondBest.getScore()){
+				return firstBest.getMove();
+			} else {
+				return secondBest.getMove();
+			}
 		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
 			e.printStackTrace();
 		}
 
-		if(firstBest.getScore()>secondBest.getScore()){
-			return firstBest.getMove();
-		} else {
-			return secondBest.getMove();
-		}
+		// Something wrong
+		return null;
+
 	}
 
 	private List<Move> split(List<Move> list, int i) {

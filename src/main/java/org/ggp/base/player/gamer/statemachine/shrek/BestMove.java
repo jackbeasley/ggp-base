@@ -6,11 +6,7 @@ public class BestMove {
 	Move move;
 	int score;
 
-	public BestMove(){
-
-	}
-
-	public void setMoveAndScore(Move move,int score){
+	public BestMove(Move move, int score){
 		this.move=move;
 		this.score = score;
 	}
