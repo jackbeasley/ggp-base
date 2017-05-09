@@ -146,7 +146,7 @@ public class BestMoveCalculator implements Callable<BestMove> {
 	}
 
 	/*
-	 * monteCarlo ----------
+	 * monteCarlo
 	 * A function that performs a monte carlo heuristic on
 	 * the given state for the given player.
 	 *
