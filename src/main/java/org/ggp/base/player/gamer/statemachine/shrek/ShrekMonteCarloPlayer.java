@@ -176,7 +176,7 @@ public class ShrekMonteCarloPlayer extends StateMachineGamer {
 		return selectMonteCarlo(result);
 	}
 
-	private void expandMonteCarlo(MachineState state, Role role)
+	private void expandMonteCarlo(Node node)
 			throws MoveDefinitionException, TransitionDefinitionException {
 		StateMachine machine = getStateMachine();
 		List<List<Move>> moves = machine.getLegalJointMoves(state);

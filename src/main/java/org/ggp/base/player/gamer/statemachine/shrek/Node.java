@@ -35,12 +35,20 @@ public class Node {
 		this.numVisits = numVisits;
 	}
 
+	public void addVisit() {
+		this.setNumVisits(this.getNumVisits() + 1);
+	}
+
 	public int getUtility() {
 		return utility;
 	}
 
 	public void setUtility(int utility) {
 		this.utility = utility;
+	}
+
+	public void addUtility(int score) {
+		this.setUtility(this.getUtility() + score);
 	}
 
 	public MachineState getState() {

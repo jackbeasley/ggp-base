@@ -25,6 +25,7 @@ public class BestMoveCalculator implements Callable<BestMove> {
 	List<Move> moves;
 	Thread thread;
 	ExecutorService es;
+	Node tree;
 
 	private static final int WINNING_SCORE = 100;
 	private static final Duration TIME_TO_DECIDE = Duration.ofSeconds(17);
@@ -38,6 +39,7 @@ public class BestMoveCalculator implements Callable<BestMove> {
 		this.machine = machine;
 		this.moves = moves;
 		this.es = es;
+		this.tree = new Node(state, null);
 	}
 
 	@Override
@@ -156,6 +158,61 @@ public class BestMoveCalculator implements Callable<BestMove> {
 			}
 		}
 		return total / count;
+	}
+
+	private MachineState selectMonteCarlo (Node node)
+			throws MoveDefinitionException, TransitionDefinitionException
+	{
+		List<MachineState> machineStates = machine.getNextStates (state);
+		MachineState result;
+
+		//if #of visits to current state is 0, return the node
+		if (state.getVisits() == 0) return state;
+
+		//else search through machine states
+		for (MachineState child: machineStates)
+		{
+			if (child.getVisits() == 0) return child;
+		}
+
+		int score = 0;
+		result = state;
+
+		//if not, use selectfn to do stuff
+		for (MachineState child: machineStates) {
+			int newScore = selectFn(child, state);
+			if (newScore > score)
+			{
+				score = newScore;
+				return child;
+			}
+		}
+		// increase visits
+		//state.setVisits(state.getVisits()+1);
+		return selectMonteCarlo(result);
+	}
+
+	private void expandMonteCarlo(Node node)
+			throws MoveDefinitionException, TransitionDefinitionException {
+
+		List<List<Move>> moves = this.machine.getLegalJointMoves(state);
+
+		for (List<Move> legalMoves : moves) {
+			// Simulate the next state and add it to the tree
+			MachineState simState = this.machine.getNextState(state, legalMoves);
+			// Add new node to tree with pointer to parent
+			node.addChild(new Node(simState, node));
+		}
+	}
+
+	private void backpropagateMonteCarlo(Node node, int score) {
+
+		node.addVisit();
+		node.addUtility(score);
+		if(node.getParent() != null) {
+			backpropagateMonteCarlo(node.getParent(), score);
+		}
+
 	}
 
 }
