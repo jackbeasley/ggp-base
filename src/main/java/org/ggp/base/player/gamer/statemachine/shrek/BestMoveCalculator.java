@@ -160,43 +160,54 @@ public class BestMoveCalculator implements Callable<BestMove> {
 		return total / count;
 	}
 
-	private MachineState selectMonteCarlo (Node node)
+	private int selectFn (Node node)
+	{
+		return (int) (
+				(node.getUtility() / node.getNumVisits()) +
+				Math.sqrt(2 * Math.log(node.getParent().getNumVisits() / node.getNumVisits()
+				)));
+	}
+
+	private Node selectMonteCarlo (Node node)
 			throws MoveDefinitionException, TransitionDefinitionException
 	{
-		List<MachineState> machineStates = machine.getNextStates (state);
-		MachineState result;
+		//instantiate machine, result to return, and list of possible machineStates
+		//MachineState state = node.getState();
+		Node result;
 
 		//if #of visits to current state is 0, return the node
-		if (state.getVisits() == 0) return state;
+		if (node.getNumVisits() == 0) return node;
 
-		//else search through machine states
-		for (MachineState child: machineStates)
+		//get a list of all the children of the node
+		List<Node> children = node.getChildren();
+
+		//else search through list of all children
+		for (Node child: children)
 		{
-			if (child.getVisits() == 0) return child;
+			if (child.getNumVisits() == 0) return child;
 		}
 
 		int score = 0;
-		result = state;
+		result = node;
 
 		//if not, use selectfn to do stuff
-		for (MachineState child: machineStates) {
-			int newScore = selectFn(child, state);
+		for (Node child: children) {
+			int newScore = selectFn(child);
 			if (newScore > score)
 			{
 				score = newScore;
-				return child;
+				result = child;
 			}
 		}
-		// increase visits
-		//state.setVisits(state.getVisits()+1);
+
 		return selectMonteCarlo(result);
 	}
 
 	private void expandMonteCarlo(Node node)
 			throws MoveDefinitionException, TransitionDefinitionException {
 
+		// Loop through all possible moves and add the resulting states to the children of the node
 		List<List<Move>> moves = this.machine.getLegalJointMoves(state);
-
 		for (List<Move> legalMoves : moves) {
 			// Simulate the next state and add it to the tree
 			MachineState simState = this.machine.getNextState(state, legalMoves);
