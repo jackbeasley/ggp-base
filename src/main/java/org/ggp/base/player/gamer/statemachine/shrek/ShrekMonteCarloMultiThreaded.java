@@ -35,7 +35,7 @@ public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
 	@Override
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-		 this.es = Executors.newFixedThreadPool(4);
+		 this.es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 	}
 
 	@Override
@@ -56,9 +56,6 @@ public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
 		StateMachine machine = getStateMachine();
 
 		List<Move> moves = machine.getLegalMoves(state,role);
-
-//		Future<BestMove> firstHalfBest = es.submit(new BestMoveCalculator(machine, state, startTime, role, firstHalfMoves));
-//		Future<BestMove> secondHalfBest = es.submit(new BestMoveCalculator(machine, state, startTime, role, secondHalfMoves));
 
 		BestMoveCalculator bestMoveCalculator = new BestMoveCalculator(machine, state, startTime, role, moves,this.es);
 		return bestMoveCalculator.call().getMove();
