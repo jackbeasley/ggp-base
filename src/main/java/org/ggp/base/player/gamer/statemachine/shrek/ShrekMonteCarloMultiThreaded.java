@@ -1,13 +1,9 @@
 package org.ggp.base.player.gamer.statemachine.shrek;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 import org.ggp.base.player.gamer.exception.GamePreviewException;
@@ -28,7 +24,7 @@ public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
 
 	private static final Logger LOGGER = Logger.getLogger(ShrekMonteCarloMultiThreaded.class.getName());
 
-	static CountDownLatch latch;
+	private ExecutorService es;
 
 	@Override
 	public StateMachine getInitialStateMachine() {
@@ -39,8 +35,7 @@ public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
 	@Override
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-		// TODO Auto-generated method stub
-
+		 this.es = Executors.newFixedThreadPool(4);
 	}
 
 	@Override
@@ -60,42 +55,14 @@ public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
 	{
 		StateMachine machine = getStateMachine();
 
-		ExecutorService es = Executors.newFixedThreadPool(2);
-
 		List<Move> moves = machine.getLegalMoves(state,role);
-		List<Move> firstHalfMoves = new ArrayList<Move>(moves);
-		List<Move> secondHalfMoves = split(firstHalfMoves,moves.size() / 2);
 
-		Future<BestMove> firstHalfBest = es.submit(new BestMoveCalculator(machine, state, startTime, role, firstHalfMoves));
-		Future<BestMove> secondHalfBest = es.submit(new BestMoveCalculator(machine, state, startTime, role, secondHalfMoves));
+//		Future<BestMove> firstHalfBest = es.submit(new BestMoveCalculator(machine, state, startTime, role, firstHalfMoves));
+//		Future<BestMove> secondHalfBest = es.submit(new BestMoveCalculator(machine, state, startTime, role, secondHalfMoves));
 
-		try {
-			BestMove firstBest = firstHalfBest.get();
-			BestMove secondBest = secondHalfBest.get();
-			if(firstBest.getScore()>secondBest.getScore()){
-				return firstBest.getMove();
-			} else {
-				return secondBest.getMove();
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-		}
-
-		// Something wrong
-		return null;
-
+		BestMoveCalculator bestMoveCalculator = new BestMoveCalculator(machine, state, startTime, role, moves,this.es);
+		return bestMoveCalculator.call().getMove();
 	}
-
-	private List<Move> split(List<Move> list, int i) {
-	    List<Move> x = new ArrayList<Move>(list.subList(i, list.size()));
-	    // Remove items from end of original list
-	    for (int j=list.size()-1; j>i; --j)
-	        list.remove(j);
-	    return x;
-	}
-
 
 	@Override
 	public void stateMachineStop() {

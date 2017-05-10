@@ -2,8 +2,12 @@ package org.ggp.base.player.gamer.statemachine.shrek;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import org.ggp.base.util.statemachine.MachineState;
 import org.ggp.base.util.statemachine.Move;
@@ -20,47 +24,30 @@ public class BestMoveCalculator implements Callable<BestMove> {
 	StateMachine machine;
 	List<Move> moves;
 	Thread thread;
+	ExecutorService es;
 
 	private static final int WINNING_SCORE = 100;
 	private static final Duration TIME_TO_DECIDE = Duration.ofSeconds(17);
 	private static final int DEPTH_LIMIT = 2;
 
 	public BestMoveCalculator(StateMachine machine, MachineState state , Instant startTime, Role role,
-			List<Move> moves) {
+			List<Move> moves,ExecutorService es) {
 		this.role = role;
 		this.state = state;
 		this.startTime = startTime;
 		this.machine = machine;
 		this.moves = moves;
+		this.es = es;
 	}
 
 	@Override
 	public BestMove call() {
-
 		try {
 			return findBestMove(this.moves, this.state, this.role);
 		} catch (MoveDefinitionException | TransitionDefinitionException | GoalDefinitionException e) {
 			e.printStackTrace();
 			return null;
 		}
-		/*
-		int score = 0;
-		for (Move legalMove : moves) {
-			Instant start = Instant.now();
-			int result;
-			try {
-				result = minScore(state, role, legalMove, 0, startTime);
-				Instant after = Instant.now();
-				Duration minScoreTime = Duration.between(start, after);
-				if (result > score) {
-					score = result;
-					bestMove = BestMove(legalMove, score);
-				}
-			} catch (MoveDefinitionException | TransitionDefinitionException | GoalDefinitionException e) {
-				e.printStackTrace();
-			}
-		}
-		latch.countDown();*/
 	}
 
 	private BestMove findBestMove(List<Move> moves, MachineState state, Role role)
@@ -118,9 +105,8 @@ public class BestMoveCalculator implements Callable<BestMove> {
 		// the montecarlo result
 		// before the time runs out
 		if (Duration.between(startTime, Instant.now()).compareTo(TIME_TO_DECIDE) > 0) {
-			// TODO: Why divide by 7
 			// TODO: Why use depth limit as Monte Carlo sample count?
-			return monteCarlo(state, role, DEPTH_LIMIT) / 7;
+			return monteCarlo(state, role, DEPTH_LIMIT);
 		}
 
 		// If we are at the depth limit, use monte carlo to get estimated values
@@ -157,12 +143,17 @@ public class BestMoveCalculator implements Callable<BestMove> {
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
 		int total = 0;
 
-		// preformDepthCharge requires an empty integer array (depth) so it can
-		// set the 0th element to
-		// the number of state changes made to reach the terminal state
-		int[] depth = new int[1];
+		List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
+
 		for (int i = 0; i < count; i++) {
-			total += machine.findReward(role, machine.performDepthCharge(state, depth));
+			futures.add(es.submit(new DepthCharge(machine, role, state)));
+		}
+		for (Future<Integer> future : futures){
+			try {
+				total+=future.get();
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
 		}
 		return total / count;
 	}
