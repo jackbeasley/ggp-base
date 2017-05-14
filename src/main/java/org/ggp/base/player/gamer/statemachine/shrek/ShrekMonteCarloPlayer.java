@@ -2,15 +2,12 @@ package org.ggp.base.player.gamer.statemachine.shrek;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.ggp.base.player.gamer.exception.GamePreviewException;
 import org.ggp.base.player.gamer.statemachine.StateMachineGamer;
 import org.ggp.base.util.game.Game;
-import org.ggp.base.util.gdl.grammar.GdlSentence;
 import org.ggp.base.util.statemachine.MachineState;
 import org.ggp.base.util.statemachine.Move;
 import org.ggp.base.util.statemachine.Role;
@@ -142,87 +139,87 @@ public class ShrekMonteCarloPlayer extends StateMachineGamer {
 		return total/count;
 	}
 
-	private MachineState selectMonteCarlo (MachineState state)
-			throws MoveDefinitionException, TransitionDefinitionException
-	{
-		//instantiate machine, result to return, and list of possible machineStates
-		StateMachine machine = getStateMachine();
-		List<MachineState> machineStates = machine.getNextStates (state);
-		MachineState result;
-
-		//if #of visits to current state is 0, return the node
-		if (state.getVisits() == 0) return state;
-
-		//else search through machine states
-		for (MachineState child: machineStates)
-		{
-			if (child.getVisits() == 0) return child;
-		}
-
-		int score = 0;
-		result = state;
-
-		//if not, use selectfn to do stuff
-		for (MachineState child: machineStates) {
-			int newScore = selectFn(child, state);
-			if (newScore > score)
-			{
-				score = newScore;
-				return child;
-			}
-		}
-		// increase visits
-		//state.setVisits(state.getVisits()+1);
-		return selectMonteCarlo(result);
-	}
-
-	private void expandMonteCarlo(Node node)
-			throws MoveDefinitionException, TransitionDefinitionException {
-		StateMachine machine = getStateMachine();
-		List<List<Move>> moves = machine.getLegalJointMoves(state);
-
-		for (List<Move> legalMoves : moves) {
-			// Simulate the next state and add it to the tree
-			MachineState simState = machine.getNextState(state, legalMoves);
-			List<MachineState> states = machine.getNextStates(state);
-			// Add new state to the end of the list
-			states.add(states.size(), simState);
-		}
-	}
-
-	private void backpropagateMonteCarlo(MachineState state, int score) {
-		StateMachine machine = getStateMachine();
-
-		state.setVisits(state.getVisits() + 1);
-		state.setUtility(state.getUtility() + score);
-
-	}
-
-	private MachineState getParentMachineState(MachineState state) {
-
-		List<Set<GdlSentence>> stateHistroyGDL = getMatch().getStateHistory();
-
-		// Transform the list of gdl sentences to one of machine states so it can be manipulated
-		List<MachineState> stateHistory = new ArrayList<MachineState>();
-		for (Set<GdlSentence> gdlstate : stateHistroyGDL) {
-			stateHistory.add(getStateMachine().getMachineStateFromSentenceList(gdlstate));
-		}
-
-		// Get the
-		int currentStateIndex = stateHistory.indexOf(state);
-
-		// Return the state before the current state
-		return stateHistory.get(currentStateIndex - 1);
-
-	}
-
-	private int selectFn (MachineState state, MachineState parent)
-	{
-		return (int) (
-				(state.getUtility() / state.getVisits()) +
-				Math.sqrt(2 * Math.log(parent.getVisits()) / state.getVisits())
-				);
-	}
+//	private MachineState selectMonteCarlo (MachineState state)
+//			throws MoveDefinitionException, TransitionDefinitionException
+//	{
+//		//instantiate machine, result to return, and list of possible machineStates
+//		StateMachine machine = getStateMachine();
+//		List<MachineState> machineStates = machine.getNextStates (state);
+//		MachineState result;
+//
+//		//if #of visits to current state is 0, return the node
+//		if (state.getVisits() == 0) return state;
+//
+//		//else search through machine states
+//		for (MachineState child: machineStates)
+//		{
+//			if (child.getVisits() == 0) return child;
+//		}
+//
+//		int score = 0;
+//		result = state;
+//
+//		//if not, use selectfn to do stuff
+//		for (MachineState child: machineStates) {
+//			int newScore = selectFn(child, state);
+//			if (newScore > score)
+//			{
+//				score = newScore;
+//				return child;
+//			}
+//		}
+//		// increase visits
+//		//state.setVisits(state.getVisits()+1);
+//		return selectMonteCarlo(result);
+//	}
+//
+//	private void expandMonteCarlo(Node node)
+//			throws MoveDefinitionException, TransitionDefinitionException {
+//		StateMachine machine = getStateMachine();
+//		List<List<Move>> moves = machine.getLegalJointMoves(state);
+//
+//		for (List<Move> legalMoves : moves) {
+//			// Simulate the next state and add it to the tree
+//			MachineState simState = machine.getNextState(state, legalMoves);
+//			List<MachineState> states = machine.getNextStates(state);
+//			// Add new state to the end of the list
+//			states.add(states.size(), simState);
+//		}
+//	}
+//
+//	private void backpropagateMonteCarlo(MachineState state, int score) {
+//		StateMachine machine = getStateMachine();
+//
+//		state.setVisits(state.getVisits() + 1);
+//		state.setUtility(state.getUtility() + score);
+//
+//	}
+//
+//	private MachineState getParentMachineState(MachineState state) {
+//
+//		List<Set<GdlSentence>> stateHistroyGDL = getMatch().getStateHistory();
+//
+//		// Transform the list of gdl sentences to one of machine states so it can be manipulated
+//		List<MachineState> stateHistory = new ArrayList<MachineState>();
+//		for (Set<GdlSentence> gdlstate : stateHistroyGDL) {
+//			stateHistory.add(getStateMachine().getMachineStateFromSentenceList(gdlstate));
+//		}
+//
+//		// Get the
+//		int currentStateIndex = stateHistory.indexOf(state);
+//
+//		// Return the state before the current state
+//		return stateHistory.get(currentStateIndex - 1);
+//
+//	}
+//
+//	private int selectFn (MachineState state, MachineState parent)
+//	{
+//		return (int) (
+//				(state.getUtility() / state.getVisits()) +
+//				Math.sqrt(2 * Math.log(parent.getVisits()) / state.getVisits())
+//				);
+//	}
 
 
 	@Override

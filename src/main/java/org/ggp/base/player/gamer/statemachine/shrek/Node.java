@@ -8,6 +8,7 @@ import org.ggp.base.util.statemachine.Move;
 import org.ggp.base.util.statemachine.Role;
 import org.ggp.base.util.statemachine.StateMachine;
 import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
+import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 
 public class Node {
 
@@ -26,13 +27,18 @@ public class Node {
 	public Node(StateMachine machine, MachineState state, Role role)
 			throws MoveDefinitionException {
 		this.setStateMachine(machine);
-		this.setNumVisits(0);
+		this.setNumVisits(1);
 		this.setUtility(0);
 		this.setState(state);
 		this.setRole(role);
 		this.setChildren(new ArrayList<Node>());
 		this.setRemainingMovesIndex(0);
-		this.setMoves(machine.getLegalJointMoves(state));
+		if(!machine.isTerminal(state)){
+			this.setMoves(machine.getLegalJointMoves(state));
+		} else {
+			List<List<Move>> moves = new ArrayList<List<Move>>();
+			this.setMoves(moves);
+		}
 		this.setParent(null);
 	}
 
@@ -132,5 +138,98 @@ public class Node {
 		this.remainingMovesIndex++;
 	}
 
+	public void backPropagate(int score){
+		this.addVisit();
+		this.addUtility(score);
+		if(this.getParent() != null){
+			this.getParent().backPropagate(score);
+		}
+	}
 
+	public Node select() throws TransitionDefinitionException, MoveDefinitionException{
+		if(this.getRemainingMovesIndex() < this.getMoves().size()-1){
+			return this.expandMaxNode();
+		} else{
+			Node selectedMin = selectMinChild();
+			if(selectedMin == null) return this; //this is a MaxNode with a terminal state
+
+			Node maxNode = selectMaxChild(selectedMin);
+			if(maxNode == null) return this;
+
+			return maxNode.select();
+		}
+	}
+
+	private Node selectMinChild(){
+		double maxScore = 0;
+		Node selectedMinNode = null;
+		for(Node minNode : this.getChildren()){
+			double selectionScore = selectMinfn(minNode);
+			if(selectionScore > maxScore){
+				maxScore = selectionScore;
+				selectedMinNode = minNode;
+			}
+		}
+		return selectedMinNode;
+	}
+
+	private Node selectMaxChild(Node selectedMin){
+		double maxScore = 0;
+		Node maxNode = null;
+		for(Node curMaxNode : selectedMin.getChildren()){
+			double selectionScore = selectMaxfn(curMaxNode);
+			if(selectionScore > maxScore){
+				maxScore = selectionScore;
+				maxNode = curMaxNode;
+			}
+		}
+		return maxNode;
+	}
+
+
+	public double selectMinfn(Node node){
+		return node.getUtility()/node.getNumVisits()+50*Math.sqrt(Math.log(node.getParent().getNumVisits())/node.getNumVisits());
+	}
+
+	private double selectMaxfn(Node node){
+		return (-1*node.getUtility()/node.getNumVisits())+50*Math.sqrt(Math.log(node.getParent().getNumVisits())/node.getNumVisits());
+	}
+
+
+	public Node expandMaxNode() throws TransitionDefinitionException, MoveDefinitionException {
+
+		//to create min child
+		if(this.getChildren().size() < this.getMoves().size() && this.getRemainingMovesIndex() == this.getChildren().size()){
+			MachineState simstate = getStateMachine().
+					getNextState(getState(), getMoves().get(getRemainingMovesIndex()));
+			Node newNode = new Node(getStateMachine(), simstate, getRole(), this);
+			this.addChild(newNode);
+		}
+
+		//
+		Node minNode = getChildren().get(getRemainingMovesIndex());
+		Node maxNode = minNode.expandMinNode();
+		return maxNode;
+	}
+
+	//creates grandchild
+	public Node expandMinNode() throws TransitionDefinitionException, MoveDefinitionException {
+		if(getStateMachine().isTerminal(getState())){
+			this.getParent().incrementRemainingMovesIndex();
+			return this.getParent();
+		}
+
+		MachineState simstate = getStateMachine().
+				getNextState(getState(), getMoves().get(getRemainingMovesIndex()));
+		Node newNode = new Node(getStateMachine(), simstate, getRole(), this);
+		this.addChild(newNode);
+		this.incrementRemainingMovesIndex();
+
+		if (this.getRemainingMovesIndex() > this.getMoves().size()-1){
+			this.getParent().incrementRemainingMovesIndex();
+		}
+
+		return newNode;
+
+	}
 }

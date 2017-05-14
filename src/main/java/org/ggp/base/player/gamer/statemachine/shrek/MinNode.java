@@ -13,32 +13,21 @@ public class MinNode extends Node {
 
 	public MinNode(StateMachine machine, MachineState state, Role role, Node parent) throws MoveDefinitionException {
 		super(machine, state, role, parent);
+
 	}
 
 	// Returns true if node fully built out
-	public boolean processMove() throws TransitionDefinitionException, MoveDefinitionException {
-
-		if (getMoves().size() == 0) {
-			// Nothing to see here
+	public MaxNode expandMinNode() throws TransitionDefinitionException, MoveDefinitionException {
+		if (this.getRemainingMovesIndex() > this.getMoves().size()-1){
 			this.getParent().incrementRemainingMovesIndex();
-			return true;
 		}
 		// Sim and add node to the tree for the current index
 		MachineState simstate = getStateMachine().
 				getNextState(getState(), getMoves().get(getRemainingMovesIndex()));
-
-		this.addChild(new MaxNode(getStateMachine(), simstate, getRole(), this));
-
-		// Don't search the move made this time again
+		MaxNode newNode = new MaxNode(getStateMachine(), simstate, getRole(), this);
+		this.addChild(newNode);
 		this.incrementRemainingMovesIndex();
-
-		// If there are no more moves to make, let the parent know not to continue searching here
-		if (this.getRemainingMovesIndex() >= getMoves().size() - 1) {
-			return true;
-		} else {
-			return false;
-		}
-
+		return newNode;
 
 	}
 

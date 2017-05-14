@@ -25,10 +25,11 @@ public class BestMoveCalculator implements Callable<BestMove> {
 	List<Move> moves;
 	Thread thread;
 	ExecutorService es;
-	Node tree;
+
+	private int depthCharges = 0;
 
 	private static final int WINNING_SCORE = 100;
-	private static final Duration TIME_TO_DECIDE = Duration.ofSeconds(17);
+	private static final Duration TIME_TO_DECIDE = Duration.ofSeconds(15);
 	private static final int DEPTH_LIMIT = 2;
 
 	public BestMoveCalculator(StateMachine machine, MachineState state , Instant startTime, Role role,
@@ -39,13 +40,14 @@ public class BestMoveCalculator implements Callable<BestMove> {
 		this.machine = machine;
 		this.moves = moves;
 		this.es = es;
-		this.tree = new Node(state, null);
 	}
 
 	@Override
 	public BestMove call() {
 		try {
-			return findBestMove(this.moves, this.state, this.role);
+			BestMove move = findBestMove(this.moves, this.state, this.role);
+			System.out.println("Total Depth Charges:" + depthCharges);
+			return move;
 		} catch (MoveDefinitionException | TransitionDefinitionException | GoalDefinitionException e) {
 			e.printStackTrace();
 			return null;
@@ -153,6 +155,7 @@ public class BestMoveCalculator implements Callable<BestMove> {
 		for (Future<Integer> future : futures){
 			try {
 				total+=future.get();
+				depthCharges++;
 			} catch (InterruptedException | ExecutionException e) {
 				e.printStackTrace();
 			}
@@ -160,70 +163,5 @@ public class BestMoveCalculator implements Callable<BestMove> {
 		return total / count;
 	}
 
-	private int selectFn (Node node)
-	{
-		return (int) (
-				(node.getUtility() / node.getNumVisits()) +
-				Math.sqrt(2 * Math.log(node.getParent().getNumVisits() / node.getNumVisits()
-				)));
-	}
-
-	private Node selectMonteCarlo (Node node)
-			throws MoveDefinitionException, TransitionDefinitionException
-	{
-		//instantiate machine, result to return, and list of possible machineStates
-		//MachineState state = node.getState();
-		Node result;
-
-		//if #of visits to current state is 0, return the node
-		if (node.getNumVisits() == 0) return node;
-
-		//get a list of all the children of the node
-		List<Node> children = node.getChildren();
-
-		//else search through list of all children
-		for (Node child: children)
-		{
-			if (child.getNumVisits() == 0) return child;
-		}
-
-		int score = 0;
-		result = node;
-
-		//if not, use selectfn to do stuff
-		for (Node child: children) {
-			int newScore = selectFn(child);
-			if (newScore > score)
-			{
-				score = newScore;
-				result = child;
-			}
-		}
-
-		return selectMonteCarlo(result);
-	}
-
-	private void expandMonteCarlo(Node node)
-			throws MoveDefinitionException, TransitionDefinitionException {
-
-		// Loop through all possible moves and add the resulting states to the children of the node
-		List<List<Move>> moves = this.machine.getLegalJointMoves(state);
-		for (List<Move> legalMoves : moves) {
-			// Simulate the next state and add it to the tree
-			MachineState simState = this.machine.getNextState(state, legalMoves);
-			// Add new node to tree with pointer to parent
-			node.addChild(new Node(simState, node));
-		}
-	}
-
-	private void backpropagateMonteCarlo(Node node, int score) {
-
-		node.addVisit();
-		node.addUtility(score);
-		if(node.getParent() != null) {
-			backpropagateMonteCarlo(node.getParent(), score);
-		}
-
-	}
 
 }
