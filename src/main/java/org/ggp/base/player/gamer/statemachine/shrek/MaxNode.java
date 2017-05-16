@@ -20,7 +20,7 @@ public class MaxNode extends Node {
 
 	@Override
 	Node select() throws MoveDefinitionException, TransitionDefinitionException {
-		if (this.getRemainingMovesIndex() < this.getMoves().size() - 1) {
+		if (this.getRemainingMovesIndex() < this.getMoves().size()) {
 			return this.expand();
 		} else {
 			double maxScore = 0;
