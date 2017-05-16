@@ -61,18 +61,25 @@ public class MCTSBestMoveCalculator implements Callable<BestMove> {
 	private BestMove findBestMove(List<Move> moves, MachineState state, Role role)
 			throws MoveDefinitionException, TransitionDefinitionException, GoalDefinitionException {
 		depthCharges = 0;
+		this.tree = new MaxNode(machine, state, role);
 		while(!((Duration.between(startTime, Instant.now()).compareTo(TIME_TO_DECIDE) > 0))){
+			System.out.println(tree);
 			Node node = tree.select();
 			int score;
 			score = monteCarlo(node.getState(),role,4);
 			node.backPropagate(score);
 		}
+
 		BestMove bestMove = new BestMove(null, 0);
-		for(int i = 0; i < tree.getChildren().size(); i++){
-			double score = tree.selectMinfn(tree.getChildren().get(i));
+		List<Node> children = tree.getChildren();
+		List<List<Move>> potentialMoves = tree.getMoves();
+		for(int i = 0; i < children.size(); i++){
+			double score = Node.selectMaxfn(children.get(i));
 			if (score > bestMove.getScore()){
 				bestMove.setScore((int)score);
-				bestMove.setMove(tree.getMoves().get(i).get(machine.getRoles().indexOf(role)));
+				bestMove.setMove(potentialMoves.get(i).get(machine.getRoles().indexOf(role)));
+				tree = children.get(i);
+				tree.setParent(null);
 			}
 		}
 

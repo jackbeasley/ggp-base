@@ -16,19 +16,44 @@ public class MinNode extends Node {
 
 	}
 
-	// Returns true if node fully built out
-	public MaxNode expandMinNode() throws TransitionDefinitionException, MoveDefinitionException {
+	@Override
+	Node select() {
+		// Maximize the
+		double maxScore = 0;
+		Node maxNode = null;
+		for (Node curMaxNode : this.getChildren()) {
+			double selectionScore = Node.selectMinfn(curMaxNode);
+			if (selectionScore > maxScore) {
+				maxScore = selectionScore;
+				maxNode = curMaxNode;
+			}
+		}
+		return maxNode;
+	}
+
+	@Override
+	Node expand() throws TransitionDefinitionException, MoveDefinitionException {
+		if(getStateMachine().isTerminal(getState())){
+			this.getParent().incrementRemainingMovesIndex();
+			return this.getParent();
+		}
+
+		MachineState simstate = getStateMachine().
+				getNextState(getState(), getMoves().get(getRemainingMovesIndex()));
+		Node newNode = new MaxNode(getStateMachine(), simstate, getRole(), this);
+		this.addChild(newNode);
+		this.incrementRemainingMovesIndex();
+
 		if (this.getRemainingMovesIndex() > this.getMoves().size()-1){
 			this.getParent().incrementRemainingMovesIndex();
 		}
-		// Sim and add node to the tree for the current index
-		MachineState simstate = getStateMachine().
-				getNextState(getState(), getMoves().get(getRemainingMovesIndex()));
-		MaxNode newNode = new MaxNode(getStateMachine(), simstate, getRole(), this);
-		this.addChild(newNode);
-		this.incrementRemainingMovesIndex();
-		return newNode;
 
+		return newNode;
+	}
+
+	@Override
+	public String toString() {
+		return "MinNode";
 	}
 
 }
