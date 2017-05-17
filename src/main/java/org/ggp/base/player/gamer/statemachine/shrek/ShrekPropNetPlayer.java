@@ -13,7 +13,11 @@ import org.ggp.base.util.gdl.grammar.GdlRelation;
 import org.ggp.base.util.gdl.grammar.GdlSentence;
 import org.ggp.base.util.propnet.architecture.Component;
 import org.ggp.base.util.propnet.architecture.PropNet;
+import org.ggp.base.util.propnet.architecture.components.And;
+import org.ggp.base.util.propnet.architecture.components.Not;
+import org.ggp.base.util.propnet.architecture.components.Or;
 import org.ggp.base.util.propnet.architecture.components.Proposition;
+import org.ggp.base.util.propnet.architecture.components.Transition;
 import org.ggp.base.util.propnet.factory.OptimizingPropNetFactory;
 import org.ggp.base.util.statemachine.MachineState;
 import org.ggp.base.util.statemachine.Move;
@@ -58,7 +62,8 @@ public class ShrekPropNetPlayer extends StateMachine {
     @Override
     public boolean isTerminal(MachineState state) {
         // TODO: Compute whether the MachineState is terminal.
-
+    	markBases(state.getContents());
+//    	  return propMark(propNet.getTerminalProposition())
         return false;
     }
 
@@ -154,7 +159,10 @@ public class ShrekPropNetPlayer extends StateMachine {
         return roles;
     }
 
-    /* Helper methods */
+
+
+    /*Start Helper methods */ // ------------------------------------------------------------------------------------------
+
     /**
      *  The markBases functions goes through the given boolean of base props
      *  and marks them on the provided set in propNet
@@ -168,6 +176,7 @@ public class ShrekPropNetPlayer extends StateMachine {
     		BaseProps.get(i).setValue(basePropValues.get(i));
     	}
     }
+
 
     /**
      *  The markInputs functions goes through the given boolean of input props
@@ -200,13 +209,44 @@ public class ShrekPropNetPlayer extends StateMachine {
      * The propMark function computes the value of view Propositions
      * @param p
      */
-    private boolean propMark (Proposition p)
+    private boolean propMark (Component p)
     {
-    	//TODO: finish this function
-    	if (p.getName().equals("base")) return p.getValue();
-    	if (p.getName().equals("input")) return p.getValue();
+//    	if (p.type=='base') {return p.mark}; \\arcs from transitions
+//    	  if (p.type=='input') {return p.mark}; \\no inputs \\
+//    	  if (p.type=='view') {return propmarkp(p.source)}; \\connectives from other not transitions
+    	System.out.println("propMark Type of Proposition: " + p.getClass());
+    	if (p instanceof Proposition && p.getInputs().size() == 1 && p.getSingleInput() instanceof Transition) return p.getValue();
+    	if (p instanceof Proposition && p.getInputs().size()==0) return p.getValue();
+    	if (p instanceof Proposition && !(p.getSingleInput() instanceof Transition)) return propMark(p.getSingleInput());
 
+    	if (p instanceof Not) return propMarkNegation(p);
+    	if (p instanceof And) return propMarkConjunction(p);
+    	if (p instanceof Or) return propMarkDisjunction(p);
+
+    	return false;
     }
+
+    private boolean propMarkNegation(Component p){
+    	return !propMark(p);
+    }
+
+    private boolean propMarkConjunction(Component p){
+    	Set<Component> sources = p.getInputs();
+    	for(Component component : sources){
+    		if(!propMark(component)) return false;
+    	}
+    	return false;
+    }
+
+    private boolean propMarkDisjunction(Component p){
+    	Set<Component> sources = p.getInputs();
+    	for(Component component : sources){
+    		if(!propMark(component)) return true;
+    	}
+    	return false;
+    }
+
+    /*End Helper methods */ // ------------------------------------------------------------------------------------------
 
     /**
      * The Input propositions are indexed by (does ?player ?action).
