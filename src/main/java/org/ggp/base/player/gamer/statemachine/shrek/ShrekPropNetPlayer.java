@@ -407,10 +407,8 @@ public class ShrekPropNetPlayer extends StateMachine {
 	public MachineState getStateFromBase() {
 		Set<GdlSentence> contents = new HashSet<GdlSentence>();
 		for (Proposition p : propNet.getBasePropositions().values()) {
-			System.out.println("before singleInput");
-			if (p.getInputs().size() != 0) {
+			/*if (p.getInputs().size() != 0)*/ {
 			p.setValue(p.getSingleInput().getValue());
-			System.out.println("after singleInput");
 			if (p.getValue()) {
 				contents.add(p.getName());
 			}
