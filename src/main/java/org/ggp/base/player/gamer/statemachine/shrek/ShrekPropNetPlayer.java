@@ -112,9 +112,14 @@ public class ShrekPropNetPlayer extends StateMachine {
 	 */
 	@Override
 	public List<Move> findActions(Role role) throws MoveDefinitionException {
-		List<Move> legalMoves = new ArrayList<Move>();
-		// TODO: do
-		return null;
+		Set<Proposition> legalProps = propNet.getLegalPropositions().get(role);
+
+		List<Move> moves = new ArrayList<Move>();
+		for (Proposition prop : legalProps) {
+			moves.add(getMoveFromProposition(prop));
+		}
+
+		return moves;
 	}
 
 	/**
