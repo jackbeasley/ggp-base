@@ -327,7 +327,8 @@ public class ShrekPropNetPlayer extends StateMachine {
 	}
 
 	private boolean propMarkNegation(Component p) {
-		return !propMark(p);
+		//should return the negation of the component before p
+		return !propMark(p.getSingleInput());
 	}
 
 	private boolean propMarkConjunction(Component p) {
