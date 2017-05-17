@@ -118,7 +118,7 @@ public class ShrekPropNetPlayer extends StateMachine {
     @Override
     public MachineState getNextState(MachineState state, List<Move> moves)
             throws TransitionDefinitionException {
-        // TODO: Compute the next state.
+        mark
         return null;
     }
 
@@ -163,11 +163,12 @@ public class ShrekPropNetPlayer extends StateMachine {
 
     /*Start Helper methods */ // ------------------------------------------------------------------------------------------
 
-    /**
+
+    /*
      *  The markBases functions goes through the given boolean of base props
      *  and marks them on the provided set in propNet
      */
-    void markBases (List <Boolean> basePropValues)
+    private void markBases (List <Boolean> basePropValues)
     {
     	//get all base propositions
     	List <Proposition> BaseProps = (List <Proposition>) propNet.getBasePropositions().values();
@@ -178,11 +179,11 @@ public class ShrekPropNetPlayer extends StateMachine {
     }
 
 
-    /**
+    /*
      *  The markInputs functions goes through the given boolean of input props
      *  and marks them on the provided set in propNet
      */
-    void markInputs (List <Boolean> inputPropValues)
+    private void markInputs (List <Boolean> inputPropValues)
     {
     	//get all input propositions
     	List <Proposition> inputProps = (List <Proposition>) propNet.getInputPropositions().values();
@@ -192,10 +193,10 @@ public class ShrekPropNetPlayer extends StateMachine {
     	}
     }
 
-    /**
+    /*
      *  clears the propNet bases
      */
-    void clearPropNet ()
+    private void clearPropNet ()
     {
     	//get all base propositions
     	List <Proposition> baseProps = (List <Proposition>) propNet.getBasePropositions().values();
@@ -215,15 +216,37 @@ public class ShrekPropNetPlayer extends StateMachine {
 //    	  if (p.type=='input') {return p.mark}; \\no inputs \\
 //    	  if (p.type=='view') {return propmarkp(p.source)}; \\connectives from other not transitions
     	System.out.println("propMark Type of Proposition: " + p.getClass());
-    	if (p instanceof Proposition && p.getInputs().size() == 1 && p.getSingleInput() instanceof Transition) return p.getValue();
-    	if (p instanceof Proposition && p.getInputs().size()==0) return p.getValue();
-    	if (p instanceof Proposition && !(p.getSingleInput() instanceof Transition)) return propMark(p.getSingleInput());
+
+    	if (isBase(p)) return p.getValue();
+    	if (isInput(p)) return p.getValue();
+    	if (isView(p)) return propMark(p.getSingleInput());
 
     	if (p instanceof Not) return propMarkNegation(p);
     	if (p instanceof And) return propMarkConjunction(p);
     	if (p instanceof Or) return propMarkDisjunction(p);
 
     	return false;
+    }
+
+    private boolean isView(Component p){
+    	if(!(p instanceof Proposition)){
+    		return false;
+    	}
+    	Set<Component> components = p.getInputs();
+    	for (Component component : components){
+    		if(component instanceof Transition){
+    			return false;
+    		}
+    	}
+    	return true;
+    }
+
+    private  boolean isBase(Component p){
+    	return (p instanceof Proposition && p.getInputs().size() == 1 && p.getSingleInput() instanceof Transition);
+    }
+
+    private boolean isInput(Component p){
+    	return (p instanceof Proposition && p.getInputs().size() == 0);
     }
 
     private boolean propMarkNegation(Component p){
