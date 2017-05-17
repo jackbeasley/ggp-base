@@ -9,11 +9,9 @@ import org.ggp.base.util.statemachine.MachineState;
 import org.ggp.base.util.statemachine.Move;
 import org.ggp.base.util.statemachine.Role;
 import org.ggp.base.util.statemachine.StateMachine;
-import org.ggp.base.util.statemachine.cache.CachedStateMachine;
 import org.ggp.base.util.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
-import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 
 public class ShrekAlphaBetaPlayer extends StateMachineGamer {
 
@@ -22,8 +20,8 @@ public class ShrekAlphaBetaPlayer extends StateMachineGamer {
 
 	List<Role> roles;
 	@Override
-	public StateMachine getInitialStateMachine() {
-		StateMachine machine = new CachedStateMachine(new ProverStateMachine());
+	public ShrekPropNetPlayer getInitialStateMachine() {
+		ShrekPropNetPlayer machine = new ShrekPropNetPlayer();
 		roles = machine.getRoles();
 
 		return machine;

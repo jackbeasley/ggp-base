@@ -146,6 +146,15 @@ public class ShrekPropNetPlayer extends StateMachine {
 	}
 
 	/**
+	 * Get Joint Legal Moves
+	 */
+	/*@Override
+	public List<List<Move>> getJointLegalMoves()
+	{
+
+	}*/
+
+	/**
 	 * Computes the next state given state and the list of moves.
 	 */
 	@Override
