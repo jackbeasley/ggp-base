@@ -62,7 +62,7 @@ public class ShrekPropNetPlayer extends StateMachine {
     @Override
     public boolean isTerminal(MachineState state) {
         // TODO: Compute whether the MachineState is terminal.
-    	markBases(state.getContents());
+    	markBases(state);
 //    	  return propMark(propNet.getTerminalProposition())
         return false;
     }
@@ -98,7 +98,8 @@ public class ShrekPropNetPlayer extends StateMachine {
     @Override
     public List<Move> findActions(Role role)
             throws MoveDefinitionException {
-        // TODO: Compute legal moves.
+        List<Move> legalMoves = new ArrayList<Move>();
+
         return null;
     }
 
@@ -118,7 +119,6 @@ public class ShrekPropNetPlayer extends StateMachine {
     @Override
     public MachineState getNextState(MachineState state, List<Move> moves)
             throws TransitionDefinitionException {
-        mark
         return null;
     }
 
@@ -165,16 +165,19 @@ public class ShrekPropNetPlayer extends StateMachine {
 
 
     /*
-     *  The markBases functions goes through the given boolean of base props
-     *  and marks them on the provided set in propNet
+     *  markBases sets all the base propostitions to match those in the given state
      */
-    private void markBases (List <Boolean> basePropValues)
+    private void markBases (MachineState state)
     {
-    	//get all base propositions
-    	List <Proposition> BaseProps = (List <Proposition>) propNet.getBasePropositions().values();
-    	for (int i = 0; i < BaseProps.size(); i++)
-    	{
-    		BaseProps.get(i).setValue(basePropValues.get(i));
+    	for (GdlSentence sent : propNet.getBasePropositions().keySet()) {
+    		// Get out previous proposition
+    		Proposition prop = propNet.getBasePropositions().get(sent);
+
+    		// Set prop true for values in the state, false for everything else
+    		prop.setValue(state.getContents().contains(sent));
+
+    		// Place modified proposition back in
+    		propNet.getBasePropositions().put(sent, prop);
     	}
     }
 
@@ -183,13 +186,18 @@ public class ShrekPropNetPlayer extends StateMachine {
      *  The markInputs functions goes through the given boolean of input props
      *  and marks them on the provided set in propNet
      */
-    private void markInputs (List <Boolean> inputPropValues)
+    private void markInputs (List<Move> moveSet)
     {
-    	//get all input propositions
-    	List <Proposition> inputProps = (List <Proposition>) propNet.getInputPropositions().values();
-    	for (int i = 0; i < inputProps.size(); i++)
-    	{
-    		inputProps.get(i).setValue(inputPropValues.get(i));
+    	for (GdlSentence sent : propNet.getInputPropositions().keySet()) {
+    		// Get out previous proposition
+    		Proposition prop = propNet.getInputPropositions().get(sent);
+
+    		// Set prop true for values in the set of moves, false for everything else
+    		// toDoes maps a list of moves to a list of GdlSentences
+    		prop.setValue(toDoes(moveSet).contains(sent));
+
+    		// Place modified proposition back in
+    		propNet.getBasePropositions().put(sent, prop);
     	}
     }
 
@@ -198,11 +206,15 @@ public class ShrekPropNetPlayer extends StateMachine {
      */
     private void clearPropNet ()
     {
-    	//get all base propositions
-    	List <Proposition> baseProps = (List <Proposition>) propNet.getBasePropositions().values();
-    	for (int i = 0; i < baseProps.size(); i++)
-    	{
-    		baseProps.get(i).setValue(false);
+    	for (GdlSentence sent : propNet.getInputPropositions().keySet()) {
+    		// Get out previous proposition
+    		Proposition prop = propNet.getInputPropositions().get(sent);
+
+    		// Set everything to false
+    		prop.setValue(false);
+
+    		// Place modified proposition back in, now false
+    		propNet.getBasePropositions().put(sent, prop);
     	}
     }
 
@@ -212,15 +224,17 @@ public class ShrekPropNetPlayer extends StateMachine {
      */
     private boolean propMark (Component p)
     {
-//    	if (p.type=='base') {return p.mark}; \\arcs from transitions
-//    	  if (p.type=='input') {return p.mark}; \\no inputs \\
-//    	  if (p.type=='view') {return propmarkp(p.source)}; \\connectives from other not transitions
     	System.out.println("propMark Type of Proposition: " + p.getClass());
 
+    	// Base and input values are standalone and hold the values of states and sets of moves respectively
+    	// Transitions always lead to base propositions, but this function will never get called on Transitions
     	if (isBase(p)) return p.getValue();
     	if (isInput(p)) return p.getValue();
+
+    	// Only has one input from a connective, so find the value of that connective and return it
     	if (isView(p)) return propMark(p.getSingleInput());
 
+    	// Simply implements the logic of AND, OR and NOT
     	if (p instanceof Not) return propMarkNegation(p);
     	if (p instanceof And) return propMarkConjunction(p);
     	if (p instanceof Or) return propMarkDisjunction(p);
@@ -229,6 +243,7 @@ public class ShrekPropNetPlayer extends StateMachine {
     }
 
     private boolean isView(Component p){
+    	// Checks to see if there is an input from a connective
     	if(!(p instanceof Proposition)){
     		return false;
     	}
@@ -242,10 +257,12 @@ public class ShrekPropNetPlayer extends StateMachine {
     }
 
     private  boolean isBase(Component p){
+    	// Has one single input from a Transition
     	return (p instanceof Proposition && p.getInputs().size() == 1 && p.getSingleInput() instanceof Transition);
     }
 
     private boolean isInput(Component p){
+    	// Has no inputs as is simply a representation of a move
     	return (p instanceof Proposition && p.getInputs().size() == 0);
     }
 
