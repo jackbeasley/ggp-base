@@ -51,7 +51,8 @@ public class ShrekPropNetPlayer extends StateMachine {
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
-
+		this.propNet.renderToFile("test.graph");
+		System.out.println(this.propNet);
 	}
 
 	/**
@@ -62,7 +63,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 	public boolean isTerminal(MachineState state) {
 
 		markBases(state);
-		return propMark(propNet.getTerminalProposition());
+		return getPropValue(propNet.getTerminalProposition());
 	}
 
 	/**
@@ -81,7 +82,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 
 		// If the goal propositon is true, return the goal value, else zero
 		for (Proposition prop : legalProps) {
-			if (propMark(prop)) {
+			if (getPropValue(prop)) {
 				return getGoalValue(prop);
 			}
 		}
@@ -97,6 +98,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 	 */
 	@Override
 	public MachineState getInitialState() {
+		clearPropNet();
 		Proposition initProp = propNet.getInitProposition();
 		for (Proposition prop : propNet.getPropositions()) {
 			if (prop.equals(initProp)) {
@@ -127,6 +129,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 	 */
 	@Override
 	public List<Move> getLegalMoves(MachineState state, Role currentRole) throws MoveDefinitionException {
+		clearPropNet();
 		markBases(state);
 
 		List<Move> legalMoves = new ArrayList<Move>();
@@ -137,7 +140,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 		// Check and see which of the legal propositions is true given the set
 		// bases and add the legal ones to the legalMoves list as a Move
 		for (Proposition prop : legalProps) {
-			if (propMark(prop)) {
+			if (getPropValue(prop)) {
 				legalMoves.add(getMoveFromProposition(prop));
 			}
 		}
@@ -172,7 +175,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 		// Loop through each base prop and calculate a new value for it given
 		// its inputs
 		for (Proposition prop : propNet.getBasePropositions().values()) {
-			prop.setValue(propMark(prop));
+			prop.setValue(getPropValue(prop));
 		}
 
 		// Creates a MachineState from the BasePropositons
@@ -249,7 +252,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 			prop.setValue(toDoes(moveSet).contains(sent));
 
 			// Place modified proposition back in
-			propNet.getBasePropositions().put(sent, prop);
+			propNet.getInputPropositions().put(sent, prop);
 		}
 	}
 
@@ -265,7 +268,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 			prop.setValue(false);
 
 			// Place modified proposition back in, now false
-			propNet.getBasePropositions().put(sent, prop);
+			propNet.getInputPropositions().put(sent, prop);
 		}
 	}
 
@@ -274,8 +277,8 @@ public class ShrekPropNetPlayer extends StateMachine {
 	 *
 	 * @param p
 	 */
-	private boolean propMark(Component p) {
-		System.out.println("propMark Type of Proposition: " + p.getClass());
+	private boolean getPropValue(Component p) {
+		//System.out.println("propMark Type of Proposition: " + p.getClass());
 
 		// Base and input values are standalone and hold the values of states
 		// and sets of moves respectively
@@ -289,7 +292,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 		// Only has one input from a connective, so find the value of that
 		// connective and return it
 		if (isView(p))
-			return propMark(p.getSingleInput());
+			return getPropValue(p.getSingleInput());
 
 		// Simply implements the logic of AND, OR and NOT
 		if (p instanceof Not)
@@ -328,13 +331,13 @@ public class ShrekPropNetPlayer extends StateMachine {
 
 	private boolean propMarkNegation(Component p) {
 		//should return the negation of the component before p
-		return !propMark(p.getSingleInput());
+		return !getPropValue(p.getSingleInput());
 	}
 
 	private boolean propMarkConjunction(Component p) {
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
-			if (!propMark(component))
+			if (!getPropValue(component))
 				return false;
 		}
 		return false;
@@ -343,7 +346,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 	private boolean propMarkDisjunction(Component p) {
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
-			if (!propMark(component))
+			if (!getPropValue(component))
 				return true;
 		}
 		return false;
@@ -407,11 +410,9 @@ public class ShrekPropNetPlayer extends StateMachine {
 	public MachineState getStateFromBase() {
 		Set<GdlSentence> contents = new HashSet<GdlSentence>();
 		for (Proposition p : propNet.getBasePropositions().values()) {
-			/*if (p.getInputs().size() != 0)*/ {
 			p.setValue(p.getSingleInput().getValue());
 			if (p.getValue()) {
 				contents.add(p.getName());
-			}
 			}
 
 		}

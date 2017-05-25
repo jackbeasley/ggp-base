@@ -22,6 +22,7 @@ public class ShrekAlphaBetaPlayer extends StateMachineGamer {
 	@Override
 	public ShrekPropNetPlayer getInitialStateMachine() {
 		ShrekPropNetPlayer machine = new ShrekPropNetPlayer();
+		machine.initialize(getMatch().getGame().getRules());
 		roles = machine.getRoles();
 
 		return machine;
