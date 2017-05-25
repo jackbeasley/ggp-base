@@ -347,24 +347,21 @@ public class ShrekPropNetPlayer extends StateMachine {
 	}
 
 	private boolean propMarkConjunction(Component p) {
-		System.out.println("CHECKING AND...");
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
-			System.out.println("CHECKING CHILD");
 			if (!propSet(component)){
-				System.out.println("AND FALSE");
 				return false;
 			}
 		}
-		System.out.println("AND TRUE");
 		return true;
 	}
 
 	private boolean propMarkDisjunction(Component p) {
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
-			if (!propSet(component))
+			if (!propSet(component)) {
 				return true;
+			}
 		}
 		return false;
 	}
