@@ -55,7 +55,7 @@ public class ShrekAlphaBetaPlayer extends StateMachineGamer {
 		int score = 0;
 
 		for(Move legalMove : moves){
-			List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, legalMove);
+			//List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, legalMove);
 			int result = minScore(state, role, legalMove, DEFAULT_ALPHA, DEFAULT_BETA);
 			if (result > score){
 				score = result;

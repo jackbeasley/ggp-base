@@ -63,7 +63,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 	public boolean isTerminal(MachineState state) {
 
 		markBases(state);
-		return getPropValue(propNet.getTerminalProposition());
+		return propSet(propNet.getTerminalProposition());
 	}
 
 	/**
@@ -82,7 +82,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 
 		// If the goal propositon is true, return the goal value, else zero
 		for (Proposition prop : legalProps) {
-			if (getPropValue(prop)) {
+			if (propSet(prop)) {
 				return getGoalValue(prop);
 			}
 		}
@@ -127,10 +127,12 @@ public class ShrekPropNetPlayer extends StateMachine {
 	/**
 	 * Computes the legal moves for role in state.
 	 */
+	// TODO: BUG HERE: propSet never returns true so there are never any legal moves
 	@Override
 	public List<Move> getLegalMoves(MachineState state, Role currentRole) throws MoveDefinitionException {
 		clearPropNet();
 		markBases(state);
+		// Might need to mark inputs here
 
 		List<Move> legalMoves = new ArrayList<Move>();
 
@@ -140,11 +142,15 @@ public class ShrekPropNetPlayer extends StateMachine {
 		// Check and see which of the legal propositions is true given the set
 		// bases and add the legal ones to the legalMoves list as a Move
 		for (Proposition prop : legalProps) {
-			if (getPropValue(prop)) {
+
+			System.out.println(prop.getName());
+			if (propSet(prop)) {
+				System.out.println("^ is set");
 				legalMoves.add(getMoveFromProposition(prop));
 			}
 		}
 
+		System.out.println("Legal Moves: " + legalMoves + "(Should not be empty)");
 		return legalMoves;
 	}
 
@@ -175,7 +181,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 		// Loop through each base prop and calculate a new value for it given
 		// its inputs
 		for (Proposition prop : propNet.getBasePropositions().values()) {
-			prop.setValue(getPropValue(prop));
+			prop.setValue(propSet(prop));
 		}
 
 		// Creates a MachineState from the BasePropositons
@@ -273,11 +279,11 @@ public class ShrekPropNetPlayer extends StateMachine {
 	}
 
 	/**
-	 * The propMark function computes the value of view Propositions
+	 * The propSet function computes the value of view Propositions
 	 *
 	 * @param p
 	 */
-	private boolean getPropValue(Component p) {
+	private boolean propSet(Component p) {
 		//System.out.println("propMark Type of Proposition: " + p.getClass());
 
 		// Base and input values are standalone and hold the values of states
@@ -292,7 +298,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 		// Only has one input from a connective, so find the value of that
 		// connective and return it
 		if (isView(p))
-			return getPropValue(p.getSingleInput());
+			return propSet(p.getSingleInput());
 
 		// Simply implements the logic of AND, OR and NOT
 		if (p instanceof Not)
@@ -331,13 +337,13 @@ public class ShrekPropNetPlayer extends StateMachine {
 
 	private boolean propMarkNegation(Component p) {
 		//should return the negation of the component before p
-		return !getPropValue(p.getSingleInput());
+		return !propSet(p.getSingleInput());
 	}
 
 	private boolean propMarkConjunction(Component p) {
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
-			if (!getPropValue(component))
+			if (!propSet(component))
 				return false;
 		}
 		return false;
@@ -346,7 +352,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 	private boolean propMarkDisjunction(Component p) {
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
-			if (!getPropValue(component))
+			if (!propSet(component))
 				return true;
 		}
 		return false;
