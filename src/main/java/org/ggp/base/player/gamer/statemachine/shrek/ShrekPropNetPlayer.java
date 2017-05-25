@@ -52,7 +52,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 			throw new RuntimeException(e);
 		}
 		this.propNet.renderToFile("test.graph");
-		System.out.println(this.propNet);
+		//System.out.println(this.propNet);
 	}
 
 	/**
@@ -141,11 +141,14 @@ public class ShrekPropNetPlayer extends StateMachine {
 
 		// Check and see which of the legal propositions is true given the set
 		// bases and add the legal ones to the legalMoves list as a Move
+		System.out.println("============ CHECKING LEGAL PROPS =============");
 		for (Proposition prop : legalProps) {
 
-			System.out.println(prop.getName());
-			if (propSet(prop)) {
-				System.out.println("^ is set");
+
+			boolean isPropSet = propSet(prop);
+			System.out.println(prop.getName() + " | ^^ is set: " + isPropSet);;
+			if (isPropSet) {
+
 				legalMoves.add(getMoveFromProposition(prop));
 			}
 		}
@@ -284,31 +287,34 @@ public class ShrekPropNetPlayer extends StateMachine {
 	 * @param p
 	 */
 	private boolean propSet(Component p) {
-		//System.out.println("propMark Type of Proposition: " + p.getClass());
+		System.out.println("propMark Type of Proposition: " + p.getClass() + "and value "+ p.getValue());
 
 		// Base and input values are standalone and hold the values of states
 		// and sets of moves respectively
 		// Transitions always lead to base propositions, but this function will
 		// never get called on Transitions
-		if (isBase(p))
+		if (isBase(p)){
+			System.out.println("BASE FOUND");
 			return p.getValue();
-		if (isInput(p))
+		} else if (isInput(p)){
+			System.out.println("INPUT FOUND");
 			return p.getValue();
-
-		// Only has one input from a connective, so find the value of that
-		// connective and return it
-		if (isView(p))
-			return propSet(p.getSingleInput());
-
-		// Simply implements the logic of AND, OR and NOT
-		if (p instanceof Not)
+		} else if (p instanceof Not){
+			System.out.println("NOT FOUND");
 			return propMarkNegation(p);
-		if (p instanceof And)
+		} else if (p instanceof And) {
+			System.out.println("AND FOUND");
 			return propMarkConjunction(p);
-		if (p instanceof Or)
+		} else if (p instanceof Or){
+			System.out.println("OR FOUND");
 			return propMarkDisjunction(p);
+		} else {
+			// Must be view as that is the only category left
+			System.out.println("SHOULD BE VIEW");
+			return propSet(p.getSingleInput());
+		}
 
-		return false;
+
 	}
 
 	private boolean isView(Component p) {
@@ -341,12 +347,17 @@ public class ShrekPropNetPlayer extends StateMachine {
 	}
 
 	private boolean propMarkConjunction(Component p) {
+		System.out.println("CHECKING AND...");
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
-			if (!propSet(component))
+			System.out.println("CHECKING CHILD");
+			if (!propSet(component)){
+				System.out.println("AND FALSE");
 				return false;
+			}
 		}
-		return false;
+		System.out.println("AND TRUE");
+		return true;
 	}
 
 	private boolean propMarkDisjunction(Component p) {
