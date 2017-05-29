@@ -1,6 +1,7 @@
 package org.ggp.base.player.gamer.statemachine.shrek;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.ggp.base.player.gamer.exception.GamePreviewException;
 import org.ggp.base.player.gamer.statemachine.StateMachineGamer;
@@ -14,6 +15,8 @@ import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 
 public class ShrekAlphaBetaPlayer extends StateMachineGamer {
+
+	private static final Logger LOGGER = Logger.getLogger(ShrekPropNetPlayer.class.getName());
 
 	private static int DEFAULT_ALPHA = 0;
 	private static int DEFAULT_BETA = 100;
@@ -70,8 +73,6 @@ public class ShrekAlphaBetaPlayer extends StateMachineGamer {
 	{
 		StateMachine machine = getStateMachine();
 
-		int score = 100;
-
 		// Other players should have noop as legal move
 		List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, move);
 
@@ -95,7 +96,7 @@ public class ShrekAlphaBetaPlayer extends StateMachineGamer {
 		if(machine.isTerminal(state)) return machine.getGoal(state, role);
 
 		List<Move> moves = machine.getLegalMoves(state,role);
-		int score = 0;
+
 		for(Move legalMove : moves){
 
 			int result = minScore(state, role, legalMove, alpha, beta);

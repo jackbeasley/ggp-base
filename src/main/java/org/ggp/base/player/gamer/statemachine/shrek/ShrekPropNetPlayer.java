@@ -6,6 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.ggp.base.util.gdl.grammar.Gdl;
 import org.ggp.base.util.gdl.grammar.GdlConstant;
@@ -30,6 +32,12 @@ import org.ggp.base.util.statemachine.implementation.prover.query.ProverQueryBui
 
 public class ShrekPropNetPlayer extends StateMachine {
 
+	private static final Logger LOGGER = Logger.getLogger(ShrekPropNetPlayer.class.getName());
+	static {
+		// FINE is very detailed info alikin to prints
+		LOGGER.setLevel(Level.INFO);
+	}
+
 	/** The underlying proposition network */
 	private PropNet propNet;
 	/** The topological ordering of the propositions */
@@ -49,10 +57,10 @@ public class ShrekPropNetPlayer extends StateMachine {
 			roles = propNet.getRoles();
 			ordering = getOrdering();
 		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
+			LOGGER.log(Level.SEVERE, "Prop net initialie exception", e);
 		}
 		this.propNet.renderToFile("test.graph");
-		//System.out.println(this.propNet);
+		//LOGGER.fine(this.propNet);
 	}
 
 	/**
@@ -141,19 +149,19 @@ public class ShrekPropNetPlayer extends StateMachine {
 
 		// Check and see which of the legal propositions is true given the set
 		// bases and add the legal ones to the legalMoves list as a Move
-		System.out.println("============ CHECKING LEGAL PROPS =============");
+		LOGGER.fine("============ CHECKING LEGAL PROPS =============");
 		for (Proposition prop : legalProps) {
 
 
 			boolean isPropSet = propSet(prop);
-			System.out.println(prop.getName() + " | ^^ is set: " + isPropSet);;
+			LOGGER.fine(prop.getName() + " | ^^ is set: " + isPropSet);
 			if (isPropSet) {
 
 				legalMoves.add(getMoveFromProposition(prop));
 			}
 		}
 
-		System.out.println("Legal Moves: " + legalMoves + "(Should not be empty)");
+		LOGGER.fine("Legal Moves: " + legalMoves + "(Should not be empty)");
 		return legalMoves;
 	}
 
@@ -184,7 +192,7 @@ public class ShrekPropNetPlayer extends StateMachine {
 		// Loop through each base prop and calculate a new value for it given
 		// its inputs
 		for (Proposition prop : propNet.getBasePropositions().values()) {
-			prop.setValue(propSet(prop));
+			prop.setValue(propSet(prop.getSingleInput().getSingleInput()));
 		}
 
 		// Creates a MachineState from the BasePropositons
@@ -287,30 +295,30 @@ public class ShrekPropNetPlayer extends StateMachine {
 	 * @param p
 	 */
 	private boolean propSet(Component p) {
-		System.out.println("propMark Type of Proposition: " + p.getClass() + "and value "+ p.getValue());
+		LOGGER.fine("propMark Type of Proposition: " + p.getClass() + "and value "+ p.getValue());
 
 		// Base and input values are standalone and hold the values of states
 		// and sets of moves respectively
 		// Transitions always lead to base propositions, but this function will
 		// never get called on Transitions
 		if (isBase(p)){
-			System.out.println("BASE FOUND");
+			LOGGER.fine("BASE FOUND");
 			return p.getValue();
 		} else if (isInput(p)){
-			System.out.println("INPUT FOUND");
+			LOGGER.fine("INPUT FOUND");
 			return p.getValue();
 		} else if (p instanceof Not){
-			System.out.println("NOT FOUND");
+			LOGGER.fine("NOT FOUND");
 			return propMarkNegation(p);
 		} else if (p instanceof And) {
-			System.out.println("AND FOUND");
+			LOGGER.fine("AND FOUND");
 			return propMarkConjunction(p);
 		} else if (p instanceof Or){
-			System.out.println("OR FOUND");
+			LOGGER.fine("OR FOUND");
 			return propMarkDisjunction(p);
 		} else {
 			// Must be view as that is the only category left
-			System.out.println("SHOULD BE VIEW");
+			LOGGER.fine("SHOULD BE VIEW");
 			return propSet(p.getSingleInput());
 		}
 
