@@ -16,15 +16,15 @@ import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 
 public class ShrekAlphaBetaPlayer extends StateMachineGamer {
 
-	private static final Logger LOGGER = Logger.getLogger(ShrekPropNetPlayer.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(ShrekPropNetMachine.class.getName());
 
 	private static int DEFAULT_ALPHA = 0;
 	private static int DEFAULT_BETA = 100;
 
 	List<Role> roles;
 	@Override
-	public ShrekPropNetPlayer getInitialStateMachine() {
-		ShrekPropNetPlayer machine = new ShrekPropNetPlayer();
+	public ShrekPropNetMachine getInitialStateMachine() {
+		ShrekPropNetMachine machine = new ShrekPropNetMachine();
 		machine.initialize(getMatch().getGame().getRules());
 		roles = machine.getRoles();
 

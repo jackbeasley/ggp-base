@@ -26,7 +26,7 @@ public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
 
 	@Override
 	public StateMachine getInitialStateMachine() {
-		ShrekPropNetPlayer machine = new ShrekPropNetPlayer();
+		ShrekPropNetMachine machine = new ShrekPropNetMachine();
 		return machine;
 	}
 
