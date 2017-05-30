@@ -1,6 +1,5 @@
 package org.ggp.base.player.gamer.statemachine.shrek;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -39,19 +38,12 @@ public class ShrekPropNetMachine extends StateMachine {
 		LOGGER.setLevel(Level.INFO);
 	}
 
-	private static final String GRAPH_FOLDER = "/home/jbeasley/Dropbox/Documents/College/CS227B/graphs/";
-
 	/** The underlying proposition network */
 	private PropNet propNet;
 	/** The topological ordering of the propositions */
 	private List<Proposition> ordering;
 	/** The player roles */
 	private List<Role> roles;
-
-	private boolean OUTPUT_GRAPHS = false;
-
-	// Inc when create graph
-	private int propNetNum = 0;
 
 	/**
 	 * Initializes the PropNetStateMachine. You should compute the topological
@@ -67,23 +59,8 @@ public class ShrekPropNetMachine extends StateMachine {
 		} catch (InterruptedException e) {
 			LOGGER.log(Level.SEVERE, "Prop net initialie exception", e);
 		}
-		//clearGraphOutputFolder();
-		createGraphFile();
-	}
-
-	private void createGraphFile() {
-		if (OUTPUT_GRAPHS) {
-			String filename = GRAPH_FOLDER + "propNet-" + propNetNum;
-			this.propNet.renderToFile(filename + ".dot");
-			propNetNum++;
-		}
-	}
-
-	private void clearGraphOutputFolder(){
-		File dir = new File(GRAPH_FOLDER);
-		for(File file: dir.listFiles())
-		    if (!file.isDirectory())
-		        file.delete();
+		this.propNet.renderToFile("test.graph");
+		//LOGGER.fine(this.propNet);
 	}
 
 	/**
@@ -96,6 +73,8 @@ public class ShrekPropNetMachine extends StateMachine {
 		markBases(state);
 		return propSet(propNet.getTerminalProposition());
 	}
+
+
 
 	/**
 	 * Computes the goal for a role in the current state. Should return the
@@ -130,14 +109,11 @@ public class ShrekPropNetMachine extends StateMachine {
 	@Override
 	public MachineState getInitialState() {
 		clearPropNet();
-		Proposition initProp = propNet.getInitProposition();
-		for (Proposition prop : propNet.getPropositions()) {
-			if (prop.equals(initProp)) {
-				prop.setValue(true);
-			}
-		}
+		propNet.getInitProposition().setValue(true);
+    	MachineState initialState = getStateFromBase();
+    	propNet.getInitProposition().setValue(false);
+        return initialState;
 
-		return computeState();
 	}
 
 	/**
@@ -161,25 +137,13 @@ public class ShrekPropNetMachine extends StateMachine {
 	// TODO: BUG HERE: propSet never returns true so there are never any legal moves
 	@Override
 	public List<Move> getLegalMoves(MachineState state, Role currentRole) throws MoveDefinitionException {
-		clearPropNet();
+
 		markBases(state);
-		// Might need to mark inputs here
-
 		List<Move> legalMoves = new ArrayList<Move>();
-
-		// Get legal propositions for the current role
 		Set<Proposition> legalProps = propNet.getLegalPropositions().get(currentRole);
-
-		// Check and see which of the legal propositions is true given the set
-		// bases and add the legal ones to the legalMoves list as a Move
-		LOGGER.fine("============ CHECKING LEGAL PROPS =============");
 		for (Proposition prop : legalProps) {
-
-
 			boolean isPropSet = propSet(prop);
-			LOGGER.fine(prop.getName() + " | ^^ is set: " + isPropSet);
 			if (isPropSet) {
-
 				legalMoves.add(getMoveFromProposition(prop));
 			}
 		}
@@ -202,37 +166,24 @@ public class ShrekPropNetMachine extends StateMachine {
 	 */
 	@Override
 	public MachineState getNextState(MachineState state, List<Move> moves) throws TransitionDefinitionException {
-		String origState = computeState().toString();
-		String origBaseProps = propNet.getBasePropositions().toString();
 		markInputs(moves);
 		markBases(state);
-		String afterState =  computeState().toString();
-		String afterBaseProps = propNet.getBasePropositions().toString();
-
-
-		if (origBaseProps.equals(afterBaseProps)) {
-			LOGGER.fine("INPUTS/BASES DID NOT CHANGE");
-		}
-
-		MachineState nextState = computeState();
-		if(nextState.toString().equals(origState)) {
-			LOGGER.fine("Compute state didn't do anything");
-		}
-
-		createGraphFile();
-		return nextState;
+		Map<GdlSentence, Proposition> basePropMap = propNet.getBasePropositions();
+        Set<GdlSentence> nextStateContents = new HashSet<GdlSentence>();
+        for (GdlSentence s : basePropMap.keySet()) {
+        	Proposition currProp = basePropMap.get(s);
+        	if (propSet(currProp.getSingleInput().getSingleInput()))
+        		nextStateContents.add(s);
+        }
+        return new MachineState(nextStateContents);
+//		LOGGER.info("Computed next state: " + nextState.toString());
+//		return nextState;
 
 	}
 
 	public MachineState computeState() {
-		// TODO: better name
 
-		// Loop through each base prop and calculate a new value for it given
-		// its inputs
 		for (Proposition prop : propNet.getBasePropositions().values()) {
-			if (propSet(prop.getSingleInput().getSingleInput()) != prop.getValue()) {
-				LOGGER.fine("Prop val changed!");
-			}
 			prop.setValue(propSet(prop.getSingleInput().getSingleInput()));
 		}
 
@@ -279,50 +230,40 @@ public class ShrekPropNetMachine extends StateMachine {
 	/* Start Helper methods */ // ------------------------------------------------------------------------------------------
 
 	/*
-	 * markBases sets all the base propositions to match those in the given
+	 * markBases sets all the base propostitions to match those in the given
 	 * state
 	 */
 	private void markBases(MachineState state) {
-
 		for (GdlSentence sent : propNet.getBasePropositions().keySet()) {
 			// Get out previous proposition
 			Proposition prop = propNet.getBasePropositions().get(sent);
-			boolean prevVal = prop.getValue();
 
 			// Set prop true for values in the state, false for everything else
 			prop.setValue(state.getContents().contains(sent));
 
-			if(prevVal != prop.getValue()) {
-				LOGGER.info("BASE VAL CHANGED");
-			}
-
 			// Place modified proposition back in
-			//propNet.getBasePropositions().put(sent, prop);
+//			propNet.getBasePropositions().put(sent, prop);
 		}
 	}
+
 
 	/*
 	 * The markInputs functions goes through the given boolean of input props
 	 * and marks them on the provided set in propNet
 	 */
 	private void markInputs(List<Move> moveSet) {
+		List<GdlSentence> moveSents = toDoes(moveSet);
 		for (GdlSentence sent : propNet.getInputPropositions().keySet()) {
 			// Get out previous proposition
 			Proposition prop = propNet.getInputPropositions().get(sent);
-			boolean prevVal = prop.getValue();
 
 			// Set prop true for values in the set of moves, false for
 			// everything else
 			// toDoes maps a list of moves to a list of GdlSentences
-			prop.setValue(toDoes(moveSet).contains(sent));
-			LOGGER.info("" + toDoes(moveSet).contains(sent));
-
-			if(prevVal != prop.getValue()) {
-				LOGGER.info("INPUT VAL CHANGED");
-			}
+			prop.setValue(moveSents.contains(sent));
 
 			// Place modified proposition back in
-			//propNet.getInputPropositions().put(sent, prop);
+//			propNet.getInputPropositions().put(sent, prop);
 		}
 	}
 
@@ -338,7 +279,7 @@ public class ShrekPropNetMachine extends StateMachine {
 			prop.setValue(false);
 
 			// Place modified proposition back in, now false
-			//propNet.getInputPropositions().put(sent, prop);
+//			propNet.getInputPropositions().put(sent, prop);
 		}
 	}
 
@@ -402,6 +343,9 @@ public class ShrekPropNetMachine extends StateMachine {
 		return (p instanceof Proposition && p.getInputs().size() == 0);
 	}
 
+
+
+
 	private boolean propMarkNegation(Component p) {
 		//should return the negation of the component before p
 		return !propSet(p.getSingleInput());
@@ -420,7 +364,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	private boolean propMarkDisjunction(Component p) {
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
-			if (!propSet(component)) {
+			if (propSet(component)) {
 				return true;
 			}
 		}
