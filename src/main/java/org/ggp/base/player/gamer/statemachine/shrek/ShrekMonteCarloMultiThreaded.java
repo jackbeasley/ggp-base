@@ -26,7 +26,7 @@ public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
 
 	@Override
 	public StateMachine getInitialStateMachine() {
-		ShrekPropNetThreadSafeMachine machine = new ShrekPropNetThreadSafeMachine();
+		ShrekPropNetMachine machine = new ShrekPropNetMachine();
 		return machine;
 	}
 
@@ -44,7 +44,9 @@ public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
 
 		// Get the start time to pass around so we can calculate elapsed time
 		Instant startTime = Instant.now();
-		return bestMove(role, state, startTime);
+		Move bestMove = bestMove(role, state, startTime);
+		LOGGER.info(bestMove.toString());
+		return bestMove;
 
 	}
 

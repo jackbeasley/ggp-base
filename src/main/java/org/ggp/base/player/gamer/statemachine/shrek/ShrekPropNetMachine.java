@@ -35,7 +35,10 @@ public class ShrekPropNetMachine extends StateMachine {
 	private static final Logger LOGGER = Logger.getLogger(ShrekPropNetMachine.class.getName());
 	static {
 		// FINE is very detailed info alikin to prints
-		LOGGER.setLevel(Level.INFO);
+		//ConsoleHandler ch = new ConsoleHandler();
+		//ch.setLevel(Level.ALL);
+		//LOGGER.addHandler(ch);
+		LOGGER.setLevel(Level.ALL);
 	}
 
 	/** The underlying proposition network */
@@ -54,6 +57,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	 */
 	@Override
 	public void initialize(List<Gdl> description) {
+		LOGGER.entering(this.getClass().getName(), "initialize");
 		try {
 			propNet = OptimizingPropNetFactory.create(description);
 			roles = propNet.getRoles();
@@ -64,6 +68,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		}
 		//this.propNet.renderToFile("test.graph");
 		//LOGGER.fine(this.propNet);
+		LOGGER.exiting(this.getClass().getName(), "initialize");
 	}
 
 	/**
@@ -72,9 +77,12 @@ public class ShrekPropNetMachine extends StateMachine {
 	 */
 	@Override
 	public boolean isTerminal(MachineState state) {
+		LOGGER.entering(this.getClass().getName(), "isTerminal");
 
 		markBases(state);
+		LOGGER.exiting(this.getClass().getName(), "isTerminal");
 		return propSet(propNet.getTerminalProposition());
+
 	}
 
 
@@ -87,7 +95,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	 */
 	@Override
 	public int getGoal(MachineState state, Role role) throws GoalDefinitionException {
-
+		LOGGER.entering(this.getClass().getName(), "getGoal");
 		markBases(state);
 
 		// Get legal propositions for the current role
@@ -96,11 +104,13 @@ public class ShrekPropNetMachine extends StateMachine {
 		// If the goal propositon is true, return the goal value, else zero
 		for (Proposition prop : legalProps) {
 			if (propSet(prop)) {
+				LOGGER.exiting(this.getClass().getName(), "getGoal");
 				return getGoalValue(prop);
 			}
 		}
 
 		// No soup for you
+		LOGGER.exiting(this.getClass().getName(), "getGoal");
 		return 0;
 	}
 
@@ -111,12 +121,15 @@ public class ShrekPropNetMachine extends StateMachine {
 	 */
 	@Override
 	public MachineState getInitialState() {
+		LOGGER.entering(this.getClass().getName(), "getInitialState");
+
 		clearPropNet();
 		propNet.getInitProposition().setValue(true);
 
     	MachineState initialState = getStateFromBase();
 
     	propNet.getInitProposition().setValue(false);
+		LOGGER.exiting(this.getClass().getName(), "getInitialState");
         return initialState;
 
 	}
@@ -126,6 +139,9 @@ public class ShrekPropNetMachine extends StateMachine {
 	 */
 	@Override
 	public List<Move> findActions(Role role) throws MoveDefinitionException {
+		LOGGER.entering(this.getClass().getName(), "findActions");
+
+		clearPropNet();
 		Set<Proposition> legalProps = propNet.getLegalPropositions().get(role);
 
 		List<Move> moves = new ArrayList<Move>();
@@ -133,16 +149,18 @@ public class ShrekPropNetMachine extends StateMachine {
 			moves.add(getMoveFromProposition(prop));
 		}
 
+		LOGGER.exiting(this.getClass().getName(), "findActions");
 		return moves;
 	}
 
 	/**
 	 * Computes the legal moves for role in state.
 	 */
-	// TODO: BUG HERE: propSet never returns true so there are never any legal moves
 	@Override
 	public List<Move> getLegalMoves(MachineState state, Role currentRole) throws MoveDefinitionException {
+		LOGGER.entering(this.getClass().getName(), "getLegalMoves");
 
+		clearPropNet();
 		markBases(state);
 		List<Move> legalMoves = new ArrayList<Move>();
 		Set<Proposition> legalProps = propNet.getLegalPropositions().get(currentRole);
@@ -154,6 +172,9 @@ public class ShrekPropNetMachine extends StateMachine {
 		}
 
 		LOGGER.fine("Legal Moves: " + legalMoves + "(Should not be empty)");
+
+		LOGGER.exiting(this.getClass().getName(), "getLegalMoves");
+
 		return legalMoves;
 	}
 
@@ -171,6 +192,9 @@ public class ShrekPropNetMachine extends StateMachine {
 	 */
 	@Override
 	public MachineState getNextState(MachineState state, List<Move> moves) throws TransitionDefinitionException {
+		LOGGER.entering(this.getClass().getName(), "getNextState");
+
+		clearPropNet();
 		markInputs(moves);
 		markBases(state);
 		Map<GdlSentence, Proposition> basePropMap = propNet.getBasePropositions();
@@ -180,6 +204,8 @@ public class ShrekPropNetMachine extends StateMachine {
         	if (propSet(currProp.getSingleInput().getSingleInput()))
         		nextStateContents.add(s);
         }
+
+		LOGGER.exiting(this.getClass().getName(), "getNextState");
         return new MachineState(nextStateContents);
 //		LOGGER.info("Computed next state: " + nextState.toString());
 //		return nextState;
@@ -188,10 +214,13 @@ public class ShrekPropNetMachine extends StateMachine {
 
 	public MachineState computeState() {
 
+		LOGGER.entering(this.getClass().getName(), "computeState");
+
 		for (Proposition prop : propNet.getBasePropositions().values()) {
 			prop.setValue(propSet(prop.getSingleInput().getSingleInput()));
 		}
 
+		LOGGER.exiting(this.getClass().getName(), "computeState");
 		// Creates a MachineState from the BasePropositons
 		return getStateFromBase();
 	}
@@ -212,6 +241,8 @@ public class ShrekPropNetMachine extends StateMachine {
 	 *         set.
 	 */
 	public List<Proposition> getOrdering() {
+		LOGGER.entering(this.getClass().getName(), "getOrdering");
+
 		// List to contain the topological ordering.
 		List<Proposition> order = new LinkedList<Proposition>();
 
@@ -222,6 +253,8 @@ public class ShrekPropNetMachine extends StateMachine {
 		List<Proposition> propositions = new ArrayList<Proposition>(propNet.getPropositions());
 
 		// TODO: Compute the topological ordering.
+
+		LOGGER.exiting(this.getClass().getName(), "getOrdering");
 
 		return order;
 	}
@@ -239,6 +272,8 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * state
 	 */
 	private void markBases(MachineState state) {
+		LOGGER.entering(this.getClass().getName(), "markBases");
+
 		for (GdlSentence sent : propNet.getBasePropositions().keySet()) {
 			// Get out previous proposition
 			Proposition prop = propNet.getBasePropositions().get(sent);
@@ -248,6 +283,8 @@ public class ShrekPropNetMachine extends StateMachine {
 
 
 		}
+		LOGGER.exiting(this.getClass().getName(), "markBases");
+
 	}
 
 	/*
@@ -255,6 +292,8 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * and marks them on the provided set in propNet
 	 */
 	private void markInputs(List<Move> moveSet) {
+		LOGGER.entering(this.getClass().getName(), "markInputs");
+
 		List<GdlSentence> moveSents = toDoes(moveSet);
 		for (GdlSentence sent : propNet.getInputPropositions().keySet()) {
 			// Get out previous proposition
@@ -265,12 +304,16 @@ public class ShrekPropNetMachine extends StateMachine {
 			// toDoes maps a list of moves to a list of GdlSentences
 			prop.setValue(moveSents.contains(sent));
 		}
+		LOGGER.exiting(this.getClass().getName(), "markInputs");
 	}
 
 	/*
 	 * clears the propNet bases
 	 */
 	private void clearPropNet() {
+		LOGGER.entering(this.getClass().getName(), "clearPropNet");
+
+		setSinceClear.clear();
 		for (GdlSentence sent : propNet.getInputPropositions().keySet()) {
 			// Get out previous proposition
 			Proposition prop = propNet.getInputPropositions().get(sent);
@@ -281,6 +324,8 @@ public class ShrekPropNetMachine extends StateMachine {
 			// Place modified proposition back in, now false
 //			propNet.getInputPropositions().put(sent, prop);
 		}
+		LOGGER.exiting(this.getClass().getName(), "markInputs");
+
 	}
 
 	/**
@@ -289,6 +334,8 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * @param p
 	 */
 	private boolean propSet(Component p) {
+		LOGGER.entering(this.getClass().getName(), "propSet");
+
 		LOGGER.fine("propMark Type of Proposition: " + p.getClass() + "and value "+ p.getValue());
 
 		// Base and input values are standalone and hold the values of states
@@ -297,18 +344,23 @@ public class ShrekPropNetMachine extends StateMachine {
 		// never get called on Transitions
 		if (isBase(p)){
 			LOGGER.fine("BASE FOUND");
+			LOGGER.exiting(this.getClass().getName(), "propSet");
 			return p.getValue();
 		} else if (isInput(p)){
 			LOGGER.fine("INPUT FOUND");
+			LOGGER.exiting(this.getClass().getName(), "propSet");
 			return p.getValue();
 		} else if (p instanceof Not){
 			LOGGER.fine("NOT FOUND");
+			LOGGER.exiting(this.getClass().getName(), "propSet");
 			return propMarkNegation(p);
 		} else if (p instanceof And) {
 			LOGGER.fine("AND FOUND");
+			LOGGER.exiting(this.getClass().getName(), "propSet");
 			return propMarkConjunction(p);
 		} else if (p instanceof Or){
 			LOGGER.fine("OR FOUND");
+			LOGGER.exiting(this.getClass().getName(), "propSet");
 			return propMarkDisjunction(p);
 		} else {
 			// Must be view as that is the only category left
@@ -318,6 +370,7 @@ public class ShrekPropNetMachine extends StateMachine {
 				prop.setValue(propSet(p.getSingleInput()));
 				setSinceClear.add(prop);
 			}
+			LOGGER.exiting(this.getClass().getName(), "propSet");
 			return p.getValue();
 		}
 
@@ -353,26 +406,35 @@ public class ShrekPropNetMachine extends StateMachine {
 
 	private boolean propMarkNegation(Component p) {
 		//should return the negation of the component before p
+		LOGGER.entering(this.getClass().getName(), "propMarkNegation");
+		LOGGER.exiting(this.getClass().getName(), "propMarkNegation");
 		return !propSet(p.getSingleInput());
 	}
 
 	private boolean propMarkConjunction(Component p) {
+		LOGGER.entering(this.getClass().getName(), "propMarkConjunction");
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
 			if (!propSet(component)){
+				LOGGER.exiting(this.getClass().getName(), "propMarkConjunction");
 				return false;
 			}
 		}
+		LOGGER.exiting(this.getClass().getName(), "propMarkConjunction");
 		return true;
 	}
 
 	private boolean propMarkDisjunction(Component p) {
+		LOGGER.entering(this.getClass().getName(), "propMarkDisjunction");
+
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
 			if (propSet(component)) {
+				LOGGER.exiting(this.getClass().getName(), "propMarkDisjunction");
 				return true;
 			}
 		}
+		LOGGER.exiting(this.getClass().getName(), "propMarkDisjunction");
 		return false;
 	}
 
@@ -391,6 +453,8 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * @return
 	 */
 	private List<GdlSentence> toDoes(List<Move> moves) {
+		LOGGER.entering(this.getClass().getName(), "toDoes");
+
 		List<GdlSentence> doeses = new ArrayList<GdlSentence>(moves.size());
 		Map<Role, Integer> roleIndices = getRoleIndices();
 
@@ -398,6 +462,8 @@ public class ShrekPropNetMachine extends StateMachine {
 			int index = roleIndices.get(roles.get(i));
 			doeses.add(ProverQueryBuilder.toDoes(roles.get(i), moves.get(index)));
 		}
+		LOGGER.exiting(this.getClass().getName(), "toDoes");
+
 		return doeses;
 	}
 
@@ -432,6 +498,8 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * @return PropNetMachineState
 	 */
 	public MachineState getStateFromBase() {
+		LOGGER.entering(this.getClass().getName(), "getStateFromBase");
+
 		Set<GdlSentence> contents = new HashSet<GdlSentence>();
 		for (Proposition p : propNet.getBasePropositions().values()) {
 			p.setValue(p.getSingleInput().getValue());
@@ -440,6 +508,8 @@ public class ShrekPropNetMachine extends StateMachine {
 			}
 
 		}
+		LOGGER.exiting(this.getClass().getName(), "getStateFromBase");
+
 		return new MachineState(contents);
 	}
 }
