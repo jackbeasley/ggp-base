@@ -110,7 +110,9 @@ public class ShrekPropNetMachine extends StateMachine {
 	public MachineState getInitialState() {
 		clearPropNet();
 		propNet.getInitProposition().setValue(true);
+
     	MachineState initialState = getStateFromBase();
+
     	propNet.getInitProposition().setValue(false);
         return initialState;
 
