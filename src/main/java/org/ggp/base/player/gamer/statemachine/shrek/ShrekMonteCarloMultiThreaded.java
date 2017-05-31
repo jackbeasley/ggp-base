@@ -26,14 +26,14 @@ public class ShrekMonteCarloMultiThreaded extends StateMachineGamer {
 
 	@Override
 	public StateMachine getInitialStateMachine() {
-		ShrekPropNetMachine machine = new ShrekPropNetMachine();
+		ShrekPropNetThreadSafeMachine machine = new ShrekPropNetThreadSafeMachine();
 		return machine;
 	}
 
 	@Override
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-		 this.es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		 this.es = Executors.newFixedThreadPool(1);
 	}
 
 	@Override

@@ -17,7 +17,7 @@ public class ShrekDepthLimitedPlayer extends StateMachineGamer {
 	List<Role> roles;
 	@Override
 	public StateMachine getInitialStateMachine() {
-		ShrekPropNetMachine machine = new ShrekPropNetMachine();
+		ShrekPropNetThreadSafeMachine machine = new ShrekPropNetThreadSafeMachine();
 		machine.initialize(getMatch().getGame().getRules());
 		roles = machine.getRoles();
 

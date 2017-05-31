@@ -30,9 +30,9 @@ import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.implementation.prover.query.ProverQueryBuilder;
 
-public class ShrekPropNetMachine extends StateMachine {
+public class ShrekPropNetThreadSafeMachine extends StateMachine {
 
-	private static final Logger LOGGER = Logger.getLogger(ShrekPropNetMachine.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(ShrekPropNetThreadSafeMachine.class.getName());
 	static {
 		// FINE is very detailed info alikin to prints
 		LOGGER.setLevel(Level.INFO);
@@ -213,8 +213,6 @@ public class ShrekPropNetMachine extends StateMachine {
 
 		// All of the propositions in the PropNet.
 		List<Proposition> propositions = new ArrayList<Proposition>(propNet.getPropositions());
-
-		// TODO: Compute the topological ordering.
 
 		return order;
 	}
