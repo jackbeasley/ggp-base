@@ -58,6 +58,7 @@ public class MCTSBestMoveCalculator implements Callable<BestMove> {
 		depthCharges = 0;
 		this.tree = new expNode(state, role,null);
 		this.tree.max = true;
+
 		while(!((Duration.between(startTime, Instant.now()).compareTo(TIME_TO_DECIDE) > 0))){
 			expNode node = tree.lazySelect();
 			expNode leaf = lazyExpand(node);
@@ -84,6 +85,66 @@ public class MCTSBestMoveCalculator implements Callable<BestMove> {
 		return bestMove;
 	}
 
+
+
+	private expNode lazyExpand(expNode node) throws MoveDefinitionException, TransitionDefinitionException{
+		if (machine.isTerminal(node.state)){ //can't expand a terminal node
+			return node;
+		}
+		if (node.max) {
+			expNode child;
+			List<Move> moves = machine.getLegalMoves(node.state,role);
+			if(node.children.size()==node.moveIndex){ //Last child has been fully built out so we create new child and grandchild
+				child = new expNode(node.state,role,node,moves.get(node.moveIndex));
+				node.children.add(child);
+			} else {
+				child = node.children.get(node.moveIndex);
+			}
+
+			expNode grandchild = createGrandchild(child);
+			if(node.children.size() == moves.size()){
+				node.childrenMade = true;
+			}
+
+			return grandchild;
+		} else {
+			//lazy expand should always be handed a max node
+			System.out.println("we fucked up");
+			return node.children.get((new Random()).nextInt(node.children.size()));
+		}
+
+	}
+
+	private expNode createGrandchild(expNode child) throws MoveDefinitionException, TransitionDefinitionException{
+		List<List<Move>> jointMoves = machine.getLegalJointMoves(child.state,role,child.move);
+		MachineState next = machine.getNextState(child.state, jointMoves.get(child.moveIndex));
+		expNode leaf = new expNode(next,role,child);
+		child.children.add(leaf);
+		child.moveIndex++;
+		if(child.moveIndex == jointMoves.size()){
+			child.parent.moveIndex++;
+		}
+		return leaf;
+	}
+
+	private int monteCarlo(MachineState state, Role role, int count)
+			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
+		int total = 0;
+		List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
+		for (int i = 0; i < count; i++) {
+			futures.add(es.submit(new DepthCharge(machine, role, state)));
+		}
+		for (Future<Integer> future : futures){
+			try {
+				total+=future.get();
+				depthCharges++;
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
+		}
+		return total / (count+1);
+	}
+
 	private expNode expand(expNode node) throws MoveDefinitionException, TransitionDefinitionException{
 		if (machine.isTerminal(node.state)){
 			return node;
@@ -106,76 +167,6 @@ public class MCTSBestMoveCalculator implements Callable<BestMove> {
 		//grab random child
 		return node.children.get((new Random()).nextInt(node.children.size()));
 	}
-
-	private expNode lazyExpand(expNode node) throws MoveDefinitionException, TransitionDefinitionException{
-		if (machine.isTerminal(node.state)){
-			return node;
-		}
-		if (node.max) {
-			//Last child has been fully built out so we create new child and grandchild
-//			System.out.println("node children num: " + node.children.size());
-//			System.out.println("node move num: " + node.moveIndex);
-			expNode child;
-			List<Move> moves = machine.getLegalMoves(node.state,role);
-			if(node.children.size()==node.moveIndex){
-//				System.out.println("creating grandchild + child");
-				//creating child
-				child = new expNode(node.state,role,node,moves.get(node.moveIndex));
-				node.children.add(child);
-			} else {
-
-//				System.out.println("creating grandchild");
-				child = node.children.get(node.moveIndex);
-
-			}
-			expNode grandchild = createGrandchild(child);
-			if(node.children.size() == moves.size()){
-				node.childrenMade = true;
-			}
-
-			return grandchild;
-		} else {
-			System.out.println("we fucked up");
-		}
-		//grab random child
-		return node.children.get((new Random()).nextInt(node.children.size()));
-	}
-
-	private expNode createGrandchild(expNode child) throws MoveDefinitionException, TransitionDefinitionException{
-		List<List<Move>> jointMoves = machine.getLegalJointMoves(child.state,role,child.move);
-//		System.out.println("joint move size: " + jointMoves.size());
-		MachineState next = machine.getNextState(child.state, jointMoves.get(child.moveIndex));
-		expNode leaf = new expNode(next,role,child);
-		child.children.add(leaf);
-		child.moveIndex++;
-		if(child.moveIndex == jointMoves.size()){
-//			System.out.println("move inde: " +leaf.parent.moveIndex);
-			child.parent.moveIndex++;
-//			System.out.println("move index after: "+ leaf.parent.moveIndex);
-		}
-		return leaf;
-	}
-
-	private int monteCarlo(MachineState state, Role role, int count)
-			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-		int total = 0;
-
-		List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
-
-		for (int i = 0; i < count; i++) {
-			futures.add(es.submit(new DepthCharge(machine, role, state)));
-		}
-		for (Future<Integer> future : futures){
-			try {
-				total+=future.get();
-				depthCharges++;
-			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
-			}
-		}
-		return total / (count+1);
-	}
-
 
 
 
