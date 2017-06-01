@@ -21,6 +21,8 @@ public class expNode {
 	List<expNode> children;
 	expNode parent;
 	boolean max;
+	boolean childrenMade;
+	int moveIndex;
 	Move move;
 
 
@@ -31,6 +33,8 @@ public class expNode {
 		this.parent = parent;
 		this.max = true;
 		this.children = new ArrayList<expNode>();
+		this.childrenMade = false;
+		this.moveIndex = 0;
 	}
 
 	public expNode( MachineState state, Role role, expNode parent,Move move)
@@ -49,13 +53,15 @@ public class expNode {
 		}
 	}
 
-	public expNode select() throws TransitionDefinitionException, MoveDefinitionException{
-		if(this.children.size()==0){
+	public expNode lazySelect(){
+		if(!childrenMade){
 			return this;
 		}
-		if(this.visits==0){
-			return this;
-		}
+		//gets grandchild
+		return this.selectChild().selectChild().lazySelect();
+	}
+
+	private expNode selectChild(){
 		expNode branch = this.children.get(0);
 		double score = Double.NEGATIVE_INFINITY;
 
@@ -69,7 +75,32 @@ public class expNode {
 				branch = child;
 			}
 		}
-		return branch.select();
+		return branch;
+
+	}
+
+	public expNode select() throws TransitionDefinitionException, MoveDefinitionException{
+		if(this.children.size()==0){
+			return this;
+		}
+		if(this.visits==0){
+			return this;
+		}
+		return this.selectChild().select();
+//		expNode branch = this.children.get(0);
+//		double score = Double.NEGATIVE_INFINITY;
+//
+//		for(expNode child : this.children){
+//			if(child.visits==0){
+//				return child;
+//			}
+//			double newscore = selectfn(child);
+//			if(newscore > score){
+//				score = newscore;
+//				branch = child;
+//			}
+//		}
+//		return branch.select();
 	}
 
 	private double selectfn(expNode node){

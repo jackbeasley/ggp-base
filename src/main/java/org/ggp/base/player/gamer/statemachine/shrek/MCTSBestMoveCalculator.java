@@ -59,11 +59,14 @@ public class MCTSBestMoveCalculator implements Callable<BestMove> {
 		this.tree = new expNode(state, role,null);
 		this.tree.max = true;
 		while(!((Duration.between(startTime, Instant.now()).compareTo(TIME_TO_DECIDE) > 0))){
-			expNode node = tree.select();
-			expNode leaf = expand(node);
+			expNode node = tree.lazySelect();
+			expNode leaf = lazyExpand(node);
 			int score;
+
 			if(!leaf.max){
-				leaf = expand(leaf);
+				//if this is reached when using lazy methods then something is screwed with tree because lazy select and lazy expand should always return max node
+				System.out.println("shouldn't be touched");
+				leaf = lazyExpand(leaf);
 			}
 			score = monteCarlo(leaf.state,role,4);
 			leaf.backPropagate(score);
@@ -77,8 +80,6 @@ public class MCTSBestMoveCalculator implements Callable<BestMove> {
 				bestMove.setMove(child.move);
 			}
 		}
-
-
 		System.out.println("depthCharges: " + depthCharges);
 		return bestMove;
 	}
@@ -104,6 +105,55 @@ public class MCTSBestMoveCalculator implements Callable<BestMove> {
 		}
 		//grab random child
 		return node.children.get((new Random()).nextInt(node.children.size()));
+	}
+
+	private expNode lazyExpand(expNode node) throws MoveDefinitionException, TransitionDefinitionException{
+		if (machine.isTerminal(node.state)){
+			return node;
+		}
+		if (node.max) {
+			//Last child has been fully built out so we create new child and grandchild
+//			System.out.println("node children num: " + node.children.size());
+//			System.out.println("node move num: " + node.moveIndex);
+			expNode child;
+			List<Move> moves = machine.getLegalMoves(node.state,role);
+			if(node.children.size()==node.moveIndex){
+//				System.out.println("creating grandchild + child");
+				//creating child
+				child = new expNode(node.state,role,node,moves.get(node.moveIndex));
+				node.children.add(child);
+			} else {
+
+//				System.out.println("creating grandchild");
+				child = node.children.get(node.moveIndex);
+
+			}
+			expNode grandchild = createGrandchild(child);
+			if(node.children.size() == moves.size()){
+				node.childrenMade = true;
+			}
+
+			return grandchild;
+		} else {
+			System.out.println("we fucked up");
+		}
+		//grab random child
+		return node.children.get((new Random()).nextInt(node.children.size()));
+	}
+
+	private expNode createGrandchild(expNode child) throws MoveDefinitionException, TransitionDefinitionException{
+		List<List<Move>> jointMoves = machine.getLegalJointMoves(child.state,role,child.move);
+//		System.out.println("joint move size: " + jointMoves.size());
+		MachineState next = machine.getNextState(child.state, jointMoves.get(child.moveIndex));
+		expNode leaf = new expNode(next,role,child);
+		child.children.add(leaf);
+		child.moveIndex++;
+		if(child.moveIndex == jointMoves.size()){
+//			System.out.println("move inde: " +leaf.parent.moveIndex);
+			child.parent.moveIndex++;
+//			System.out.println("move index after: "+ leaf.parent.moveIndex);
+		}
+		return leaf;
 	}
 
 	private int monteCarlo(MachineState state, Role role, int count)
