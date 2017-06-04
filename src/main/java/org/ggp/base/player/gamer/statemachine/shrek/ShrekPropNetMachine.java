@@ -331,12 +331,63 @@ public class ShrekPropNetMachine extends StateMachine {
 			visit(components.get(0), order, components, tempMarks);
 		}
 
+<<<<<<< HEAD
 		// Check that all components are in order
 		for (Component c : propNet.getPropositions()) {
 			if (!order.contains(c)) {
 				LOGGER.severe("ordering does not contain all components");
 			}
 		}
+=======
+		//compute the in-degree of each node, create a map from each prop to its indegree
+		//get number of components in the graph
+		int numNodes = components.size();
+		Map <Component, Integer> inDegrees = new HashMap<Component, Integer> (numNodes);
+		for (Proposition prop: propositions)
+		{
+			int inDegree = prop.getOutputs().size();
+			inDegrees.put(prop, inDegree);
+		}
+		System.out.println(inDegrees.toString());
+
+		Queue<Proposition> q = new LinkedList<Proposition>();
+		//enqueue all input propositions and base propositions (indegree 0)
+		for (Proposition p: propNet.getInputPropositions().values())
+		{
+			q.add(p);
+		}
+		for (Proposition p: propNet.getBasePropositions().values())
+		{
+			q.add(p);
+		}
+		System.out.println(q.toString());
+
+		//add each proposition to ordering list and decrease indegree order of neighboring propositions
+		while (!q.isEmpty())
+		{
+			Proposition p = q.poll();
+			order.add(p);
+
+			//get outputs of p
+			Set<Component> outputs = p.getOutputs();
+
+			//decrease indegree of each output by 1
+			for (Component c: outputs)
+			{
+				inDegrees.put(c,inDegrees.get(c)-1);
+				//if new value of indegrees for c == 0, add to queue
+				if (inDegrees.get(c) == 0)
+				{
+					q.add((Proposition) c);
+				}
+			}
+		}
+
+		for (int i = 0; i < order.size(); i++)
+		{
+			System.out.println(order.get(i));
+		}
+>>>>>>> 540d7071e75b891cb05cd1dbe766f65db400d73a
 
 		LOGGER.exiting(this.getClass().getName(), "getOrdering");
 		return order;
