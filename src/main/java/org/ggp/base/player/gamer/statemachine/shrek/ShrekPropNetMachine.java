@@ -63,9 +63,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		try {
 			propNet = OptimizingPropNetFactory.create(description);
 			roles = propNet.getRoles();
-			System.out.println("right before getOrdering");
 			ordering = getOrdering();
-
 			setSinceClear = new HashSet<Proposition>();
 		} catch (InterruptedException e) {
 			LOGGER.log(Level.SEVERE, "Prop net initialie exception", e);
