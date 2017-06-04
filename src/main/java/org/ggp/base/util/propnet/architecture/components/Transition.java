@@ -27,4 +27,10 @@ public final class Transition extends Component
 	{
 		return toDot("box", "grey", "TRANSITION");
 	}
+
+	@Override
+	public void setValue() {
+		// TODO Auto-generated method stub
+
+	}
 }

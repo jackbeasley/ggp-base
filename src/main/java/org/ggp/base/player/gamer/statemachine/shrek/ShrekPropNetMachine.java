@@ -277,46 +277,6 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * @return The order in which the truth values of propositions need to be
 	 *         set.
 	 */
-	/*
-	 * public List<Component> getOrdering() {
-	 * LOGGER.entering(this.getClass().getName(), "getOrdering");
-	 *
-	 * // List to contain the topological ordering. List<Component> order = new
-	 * LinkedList<Component>();
-	 *
-	 * // All of the components in the PropNet List<Component> components = new
-	 * ArrayList<Component>(propNet.getComponents());
-	 *
-	 * // compute the in-degree of each node, create a map from each prop to //
-	 * its indegree // get number of components in the graph int numNodes =
-	 * components.size(); Map<Component, Integer> inDegrees = new
-	 * HashMap<Component, Integer>(numNodes); for (Component c : components) {
-	 * int inDegree = c.getInputs().size(); inDegrees.put(c, inDegree); }
-	 * System.out.println(inDegrees.toString());
-	 *
-	 * Queue<Component> q = new LinkedList<Component>(); // enqueue all input
-	 * propositions and base propositions (indegree 0) for (Component c :
-	 * components) { if(c.getInputs().size() == 0){ q.add(c); } }
-	 *
-	 * // add each proposition to ordering list and decrease indegree order of
-	 * // neighboring propositions while (!q.isEmpty()) { Component p =
-	 * q.poll(); order.add(p);
-	 *
-	 * // get outputs of p Set<Component> outputs = p.getOutputs();
-	 *
-	 * // decrease indegree of each output by 1 for (Component c : outputs) {
-	 * inDegrees.put(c, inDegrees.get(c) - 1); // if new value of indegrees for
-	 * c == 0, add to queue if (inDegrees.get(c) == 0) { q.add(c); } } }
-	 *
-	 * // Check that all components are in order for(Component c :
-	 * propNet.getComponents()) { if(!order.contains(c)) {
-	 * LOGGER.severe("ordering does not contain all components"); } }
-	 *
-	 *
-	 * LOGGER.exiting(this.getClass().getName(), "getOrdering");
-	 *
-	 * return order; }
-	 */
 
 	public List<Component> getOrdering() {
 		LOGGER.exiting(this.getClass().getName(), "getOrdering");
@@ -358,7 +318,7 @@ public class ShrekPropNetMachine extends StateMachine {
 			}
 			unmarked.remove(c); // Mark c
 			tmpMarks.remove(c);
-			order.add(c);
+			order.add(0, c);
 		}
 	}
 
