@@ -1,10 +1,12 @@
 package org.ggp.base.player.gamer.statemachine.shrek;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,7 +63,9 @@ public class ShrekPropNetMachine extends StateMachine {
 		try {
 			propNet = OptimizingPropNetFactory.create(description);
 			roles = propNet.getRoles();
+			System.out.println("right before getOrdering");
 			ordering = getOrdering();
+
 			setSinceClear = new HashSet<Proposition>();
 		} catch (InterruptedException e) {
 			LOGGER.log(Level.SEVERE, "Prop net initialie exception", e);
@@ -224,6 +228,13 @@ public class ShrekPropNetMachine extends StateMachine {
 		// Creates a MachineState from the BasePropositons
 		return getStateFromBase();
 	}
+	/**
+	 * Recursive helper function for getOrdering, marks current vertex as visited and then recurses on the
+	 * vertex next to it in the adjacency list
+	 *
+	 * @param v: The integer corresponding to node
+	 */
+
 
 	/**
 	 * This should compute the topological ordering of propositions. Each
@@ -252,7 +263,54 @@ public class ShrekPropNetMachine extends StateMachine {
 		// All of the propositions in the PropNet.
 		List<Proposition> propositions = new ArrayList<Proposition>(propNet.getPropositions());
 
-		// TODO: Compute the topological ordering.
+		//compute the in-degree of each node, create a map from each prop to its indegree
+		//get number of components in the graph
+		int numNodes = components.size();
+		Map <Component, Integer> inDegrees = new HashMap<Component, Integer> (numNodes);
+		for (Proposition prop: propositions)
+		{
+			int inDegree = prop.getOutputs().size();
+			inDegrees.put(prop, inDegree);
+		}
+		System.out.println(inDegrees.toString());
+
+		Queue<Proposition> q = new LinkedList<Proposition>();
+		//enqueue all input propositions and base propositions (indegree 0)
+		for (Proposition p: propNet.getInputPropositions().values())
+		{
+			q.add(p);
+		}
+		for (Proposition p: propNet.getBasePropositions().values())
+		{
+			q.add(p);
+		}
+		System.out.println(q.toString());
+
+		//add each proposition to ordering list and decrease indegree order of neighboring propositions
+		while (!q.isEmpty())
+		{
+			Proposition p = q.poll();
+			order.add(p);
+
+			//get outputs of p
+			Set<Component> outputs = p.getOutputs();
+
+			//decrease indegree of each output by 1
+			for (Component c: outputs)
+			{
+				inDegrees.put(c,inDegrees.get(c)-1);
+				//if new value of indegrees for c == 0, add to queue
+				if (inDegrees.get(c) == 0)
+				{
+					q.add((Proposition) c);
+				}
+			}
+		}
+
+		for (int i = 0; i < order.size(); i++)
+		{
+			System.out.println(order.get(i));
+		}
 
 		LOGGER.exiting(this.getClass().getName(), "getOrdering");
 
