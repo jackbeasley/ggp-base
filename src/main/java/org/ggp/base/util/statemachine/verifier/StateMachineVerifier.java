@@ -14,6 +14,9 @@ public class StateMachineVerifier {
     public static boolean checkMachineConsistency(StateMachine theReference, StateMachine theSubject, long timeToSpend) {
         long startTime = System.currentTimeMillis();
 
+        System.out.println(theSubject);
+        System.out.println(theReference);
+
         GamerLogger.log("StateMachine", "Performing automatic consistency testing on " + theSubject.getClass().getName() + " using " + theReference.getClass().getName() + " as a reference.");
 
         List<StateMachine> theMachines = new ArrayList<StateMachine>();

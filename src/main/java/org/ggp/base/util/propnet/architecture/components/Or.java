@@ -8,13 +8,15 @@ import org.ggp.base.util.propnet.architecture.Component;
 @SuppressWarnings("serial")
 public final class Or extends Component
 {
+
+	private boolean value;
+
 	/**
 	 * Returns true if and only if at least one of the inputs to the or is true.
 	 *
 	 * @see org.ggp.base.util.propnet.architecture.Component#getValue()
 	 */
-	@Override
-	public boolean getValue()
+	public boolean calcValue()
 	{
 		for ( Component component : getInputs() )
 		{
@@ -33,5 +35,15 @@ public final class Or extends Component
 	public String toString()
 	{
 		return toDot("ellipse", "grey", "OR");
+	}
+
+	@Override
+	public boolean getValue() {
+		return this.value;
+	}
+
+	@Override
+	public void setValue() {
+		this.value = calcValue();
 	}
 }

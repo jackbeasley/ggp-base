@@ -23,8 +23,8 @@ public class ShrekAlphaBetaPlayer extends StateMachineGamer {
 
 	List<Role> roles;
 	@Override
-	public ShrekPropNetThreadSafeMachine getInitialStateMachine() {
-		ShrekPropNetThreadSafeMachine machine = new ShrekPropNetThreadSafeMachine();
+	public StateMachine getInitialStateMachine() {
+		ShrekPropNetMachine machine = new ShrekPropNetMachine();
 		machine.initialize(getMatch().getGame().getRules());
 		roles = machine.getRoles();
 
@@ -34,7 +34,6 @@ public class ShrekAlphaBetaPlayer extends StateMachineGamer {
 	@Override
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-		// TODO Auto-generated method stub
 
 	}
 

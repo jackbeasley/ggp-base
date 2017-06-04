@@ -122,6 +122,11 @@ public abstract class Component implements Serializable
     public abstract boolean getValue();
 
     /**
+     * Calculates and sets the value of the component based on getValue
+     */
+    public abstract void setValue();
+
+    /**
      * Returns a representation of the Component in .dot format.
      *
      * @see java.lang.Object#toString()

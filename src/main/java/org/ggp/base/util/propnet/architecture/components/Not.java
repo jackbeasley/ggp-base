@@ -8,6 +8,8 @@ import org.ggp.base.util.propnet.architecture.Component;
 @SuppressWarnings("serial")
 public final class Not extends Component
 {
+
+	private boolean value;
 	/**
 	 * Returns the inverse of the input to the not.
 	 *
@@ -16,7 +18,12 @@ public final class Not extends Component
 	@Override
 	public boolean getValue()
 	{
-		return !getSingleInput().getValue();
+		return value;
+	}
+
+	@Override
+	public void setValue() {
+		value = !getSingleInput().getValue();
 	}
 
 	/**

@@ -8,13 +8,14 @@ import org.ggp.base.util.propnet.architecture.Component;
 @SuppressWarnings("serial")
 public final class And extends Component
 {
+	private boolean value;
+
 	/**
 	 * Returns true if and only if every input to the and is true.
 	 *
-	 * @see org.ggp.base.util.propnet.architecture.Component#getValue()
+	 *
 	 */
-	@Override
-	public boolean getValue()
+	public boolean calcValue()
 	{
 		for ( Component component : getInputs() )
 		{
@@ -26,6 +27,18 @@ public final class And extends Component
 		return true;
 	}
 
+	@Override
+	/**
+	 * Returns the set value of the And
+	 *
+	 * @see org.ggp.base.util.propnet.architecture.Component#getValue()
+	 */
+	public boolean getValue(){
+		return this.value;
+	}
+
+
+
 	/**
 	 * @see org.ggp.base.util.propnet.architecture.Component#toString()
 	 */
@@ -33,6 +46,12 @@ public final class And extends Component
 	public String toString()
 	{
 		return toDot("invhouse", "grey", "AND");
+	}
+
+	@Override
+	public void setValue() {
+		value = calcValue();
+
 	}
 
 }
