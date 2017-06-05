@@ -30,6 +30,7 @@ import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.implementation.prover.query.ProverQueryBuilder;
 
 public class ShrekPropNetMachine extends StateMachine {
+	//TODO: clear propnet?
 
 	private static final Logger LOGGER = Logger.getLogger(ShrekPropNetMachine.class.getName());
 	static {
@@ -260,8 +261,9 @@ public class ShrekPropNetMachine extends StateMachine {
 				LOGGER.fine("Processing:" + c.getClass().getName() + " val=" + c.getValue());
 				c.setValue();
 				LOGGER.fine("New Val:" + c.getValue());
-
-				toProcess.addAll(c.getOutputs());
+				if(!(c instanceof Transition)){
+					toProcess.addAll(c.getOutputs()); //don't really understand this?
+				}
 			}
 		}
 		LOGGER.exiting(this.getClass().getName(), "processComponents");
