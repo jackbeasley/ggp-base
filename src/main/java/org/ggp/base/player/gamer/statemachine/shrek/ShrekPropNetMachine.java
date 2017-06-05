@@ -307,6 +307,11 @@ public class ShrekPropNetMachine extends StateMachine {
 		}
 
 		LOGGER.exiting(this.getClass().getName(), "getOrdering");
+
+		//remove base and input props from ordering
+		components.removeAll(propNet.getBasePropositions().values());
+		components.removeAll(propNet.getInputPropositions().values());
+
 		return order;
 
 	}
