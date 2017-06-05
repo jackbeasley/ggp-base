@@ -6,9 +6,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.StreamHandler;
 
 import org.ggp.base.util.gdl.grammar.Gdl;
 import org.ggp.base.util.gdl.grammar.GdlConstant;
@@ -33,9 +34,10 @@ public class ShrekPropNetMachine extends StateMachine {
 	private static final Logger LOGGER = Logger.getLogger(ShrekPropNetMachine.class.getName());
 	static {
 		// FINE is very detailed info like prints
-		ConsoleHandler ch = new ConsoleHandler();
-		ch.setLevel(Level.ALL);
-		//LOGGER.addHandler(ch);
+		SimpleFormatter fmt = new SimpleFormatter();
+		StreamHandler sh = new StreamHandler(System.out, fmt);
+		sh.setLevel(Level.ALL);
+		LOGGER.addHandler(sh);
 		LOGGER.setLevel(Level.ALL);
 	}
 
@@ -128,11 +130,7 @@ public class ShrekPropNetMachine extends StateMachine {
 
 		MachineState initialState = getStateFromBase();
 
-		// init.setValue(false);
-		// toProcess.clear(); // To be sure
-		// toProcess.add(init);
-		// Compute all the states from the init component, now false
-		// processComponents(toProcess);
+		init.setValue(false);
 		LOGGER.exiting(this.getClass().getName(), "getInitialState");
 		return initialState;
 	}
@@ -219,6 +217,9 @@ public class ShrekPropNetMachine extends StateMachine {
 		LOGGER.exiting(this.getClass().getName(), "deltaComputeState");
 	}
 
+	/*
+	 * Simply computes all states from the given machinestate and moveset
+	 */
 	public void computeAllStates(MachineState state, List<Move> moveSet) {
 		LOGGER.entering(this.getClass().getName(), "computeAllStates");
 
@@ -233,8 +234,10 @@ public class ShrekPropNetMachine extends StateMachine {
 		}
 
 		// add all the bases and inputs that changed
-		toProcess.addAll(propNet.getBasePropositions().values());
-		toProcess.addAll(propNet.getInputPropositions().values());
+		//toProcess.addAll(propNet.getBasePropositions().values());
+		//toProcess.addAll(propNet.getInputPropositions().values());
+
+		toProcess.addAll(ordering);
 
 		processComponents(toProcess);
 
@@ -243,6 +246,8 @@ public class ShrekPropNetMachine extends StateMachine {
 
 	private void processComponents(Set<Component> toProcess) {
 		LOGGER.entering(this.getClass().getName(), "processComponents");
+
+		LOGGER.fine(toProcess.toString());
 
 		for (Component c : ordering) {
 			LOGGER.fine("checking: " + c.getClass().getName());
@@ -312,7 +317,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		if (unmarked.contains(c)) {
 			tmpMarks.add(c);
 			for (Component n : c.getOutputs()) {
-				if(!(n instanceof Transition)){
+				if(!(c instanceof Transition)){
 					visit(n, order, unmarked, tmpMarks);
 				}
 			}
