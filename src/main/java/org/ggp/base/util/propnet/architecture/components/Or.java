@@ -9,7 +9,7 @@ import org.ggp.base.util.propnet.architecture.Component;
 public final class Or extends Component
 {
 
-	private boolean value;
+	private boolean value = false;
 
 	/**
 	 * Returns true if and only if at least one of the inputs to the or is true.
