@@ -389,7 +389,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		for(Component c : order) {
 			for(Component in : c.getInputs()) {
 				if(!(in instanceof Transition)){
-					if(!visited.contains(c)) {
+					if(!visited.contains(in)) {
 						LOGGER.severe("TOPO SORT INVALID");
 						//return false;
 					}
