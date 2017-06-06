@@ -8,7 +8,7 @@ import org.ggp.base.util.propnet.architecture.Component;
 @SuppressWarnings("serial")
 public final class And extends Component
 {
-	private boolean value;
+	private boolean value = false;
 
 	/**
 	 * Returns true if and only if every input to the and is true.

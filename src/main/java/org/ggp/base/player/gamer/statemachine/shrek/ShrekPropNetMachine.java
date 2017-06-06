@@ -36,9 +36,9 @@ public class ShrekPropNetMachine extends StateMachine {
 		// FINE is very detailed info like prints
 		SimpleFormatter fmt = new SimpleFormatter();
 		StreamHandler sh = new StreamHandler(System.out, fmt);
-		sh.setLevel(Level.ALL);
+		sh.setLevel(Level.SEVERE);
 		LOGGER.addHandler(sh);
-		LOGGER.setLevel(Level.ALL);
+		LOGGER.setLevel(Level.SEVERE);
 	}
 
 	/** The underlying proposition network */
@@ -76,7 +76,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	public boolean isTerminal(MachineState state) {
 		LOGGER.entering(this.getClass().getName(), "isTerminal");
 
-		deltaComputeState(state, null);
+		computeAllStates(state, null);
 
 		LOGGER.exiting(this.getClass().getName(), "isTerminal");
 		return propNet.getTerminalProposition().getValue();
@@ -93,20 +93,19 @@ public class ShrekPropNetMachine extends StateMachine {
 	public int getGoal(MachineState state, Role role) throws GoalDefinitionException {
 		LOGGER.entering(this.getClass().getName(), "getGoal");
 
-		deltaComputeState(state, null);
+		computeAllStates(state, null);
 
 		// Get legal propositions for the current role
-		Set<Proposition> legalProps = propNet.getGoalPropositions().get(role);
+		Set<Proposition> goalProps = propNet.getGoalPropositions().get(role);
 
 		// If the goal proposition is true, return the goal value, else zero
-		for (Proposition prop : legalProps) {
+		for (Proposition prop : goalProps) {
 			if (prop.getValue()) {
 				LOGGER.exiting(this.getClass().getName(), "getGoal");
 				return getGoalValue(prop);
 			}
 		}
 
-		// No soup for you
 		LOGGER.exiting(this.getClass().getName(), "getGoal");
 		return 0;
 	}
@@ -124,11 +123,12 @@ public class ShrekPropNetMachine extends StateMachine {
 		init.setValue(true);
 
 		Set<Component> toProcess = new HashSet<Component>();
-		toProcess.add(init);
+		toProcess.add(propNet.getInitProposition());
 		// Compute all the states from the init component
 		processComponents(toProcess);
 
 		MachineState initialState = getStateFromBase();
+		LOGGER.info(initialState.toString());
 
 		init.setValue(false);
 		LOGGER.exiting(this.getClass().getName(), "getInitialState");
@@ -186,19 +186,18 @@ public class ShrekPropNetMachine extends StateMachine {
 		LOGGER.entering(this.getClass().getName(), "getNextState");
 
 		// Compute the next state
-		deltaComputeState(state, moves);
+		computeAllStates(state, moves);
 
 		LOGGER.exiting(this.getClass().getName(), "getNextState");
-		return getStateFromBase();
-		// LOGGER.info("Computed next state: " + nextState.toString());
-		// return nextState;
 
+		return getStateFromBase();
 	}
 
 	/*
 	 * Uses differential propagation to build out the whole propnet efficiently
 	 * from the state or moveSet given to it.
 	 */
+	/*
 	public void deltaComputeState(MachineState state, List<Move> moveSet) {
 		LOGGER.entering(this.getClass().getName(), "deltaComputeState");
 
@@ -216,6 +215,7 @@ public class ShrekPropNetMachine extends StateMachine {
 
 		LOGGER.exiting(this.getClass().getName(), "deltaComputeState");
 	}
+	*/
 
 	/*
 	 * Simply computes all states from the given machinestate and moveset
@@ -250,7 +250,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		LOGGER.fine(toProcess.toString());
 
 		for (Component c : ordering) {
-			LOGGER.fine("checking: " + c.getClass().getName());
+			//LOGGER.fine("checking: " + c.getClass().getName());
 
 			// Sets the value of AND, OR, NOT and Transition components and
 			// leaves propositions alone
@@ -258,7 +258,10 @@ public class ShrekPropNetMachine extends StateMachine {
 			// nothing
 			if (toProcess.contains(c)) {
 				LOGGER.fine("Processing:" + c.getClass().getName() + " val=" + c.getValue());
-				c.setValue();
+				if(!(propNet.getBasePropositions().containsValue(c) || propNet.getInputPropositions().containsValue(c) || propNet.getInitProposition() == c)) {
+					c.setValue();
+				}
+
 				LOGGER.fine("New Val:" + c.getValue());
 
 				toProcess.addAll(c.getOutputs());
@@ -290,6 +293,11 @@ public class ShrekPropNetMachine extends StateMachine {
 
 		// All of the components in the PropNet
 		List<Component> components = new ArrayList<Component>(propNet.getComponents());
+
+		//components.removeAll(propNet.getBasePropositions().values());
+		//components.removeAll(propNet.getInputPropositions().values());
+		//components.remove(propNet.getInitProposition());
+
 
 		Set<Component> tempMarks = new HashSet<Component>();
 

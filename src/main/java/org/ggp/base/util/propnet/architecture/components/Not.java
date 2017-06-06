@@ -9,7 +9,7 @@ import org.ggp.base.util.propnet.architecture.Component;
 public final class Not extends Component
 {
 
-	private boolean value;
+	private boolean value = false;
 	/**
 	 * Returns the inverse of the input to the not.
 	 *

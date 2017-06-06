@@ -7,8 +7,7 @@ import org.ggp.base.util.propnet.architecture.Component;
  * The Proposition class is designed to represent named latches.
  */
 @SuppressWarnings("serial")
-public class Proposition extends Component
-{
+public class Proposition extends Component {
 	/** The name of the Proposition. */
 	private GdlSentence name;
 	/** The value of the Proposition. */
@@ -18,10 +17,9 @@ public class Proposition extends Component
 	 * Creates a new Proposition with name <tt>name</tt>.
 	 *
 	 * @param name
-	 * The name of the Proposition.
+	 *            The name of the Proposition.
 	 */
-	public Proposition(GdlSentence name)
-	{
+	public Proposition(GdlSentence name) {
 		this.name = name;
 		this.value = false;
 	}
@@ -31,23 +29,21 @@ public class Proposition extends Component
 	 *
 	 * @return The name of the Proposition.
 	 */
-	public GdlSentence getName()
-	{
+	public GdlSentence getName() {
 		return name;
 	}
 
-    /**
-     * Setter method.
-     *
-     * This should only be rarely used; the name of a proposition
-     * is usually constant over its entire lifetime.
-     *
-     * @return The name of the Proposition.
-     */
-    public void setName(GdlSentence newName)
-    {
-        name = newName;
-    }
+	/**
+	 * Setter method.
+	 *
+	 * This should only be rarely used; the name of a proposition is usually
+	 * constant over its entire lifetime.
+	 *
+	 * @return The name of the Proposition.
+	 */
+	public void setName(GdlSentence newName) {
+		name = newName;
+	}
 
 	/**
 	 * Returns the current value of the Proposition.
@@ -55,8 +51,7 @@ public class Proposition extends Component
 	 * @see org.ggp.base.util.propnet.architecture.Component#getValue()
 	 */
 	@Override
-	public boolean getValue()
-	{
+	public boolean getValue() {
 		return value;
 	}
 
@@ -66,8 +61,7 @@ public class Proposition extends Component
 	 * @param value
 	 *            The new value of the Proposition.
 	 */
-	public void setValue(boolean value)
-	{
+	public void setValue(boolean value) {
 		this.value = value;
 	}
 
@@ -75,14 +69,12 @@ public class Proposition extends Component
 	 * @see org.ggp.base.util.propnet.architecture.Component#toString()
 	 */
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return toDot("circle", value ? "red" : "white", name.toString());
 	}
 
 	@Override
 	public void setValue() {
-		// DO NOTHING
-
+		setValue(this.getSingleInput().getValue());
 	}
 }
