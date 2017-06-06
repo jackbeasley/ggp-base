@@ -29,6 +29,7 @@ import org.ggp.base.util.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.implementation.prover.query.ProverQueryBuilder;
+import org.python.constantine.Constant;
 
 public class ShrekPropNetMachine extends StateMachine {
 
@@ -78,7 +79,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	@Override
 	public boolean isTerminal(MachineState state) {
 		LOGGER.entering(this.getClass().getName(), "isTerminal");
-
+		clearPropNet();
 		markBases(state);
 		LOGGER.exiting(this.getClass().getName(), "isTerminal");
 		return propSet(propNet.getTerminalProposition());
@@ -334,73 +335,36 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * @param p
 	 */
 	private boolean propSet(Component p) {
-		LOGGER.entering(this.getClass().getName(), "propSet");
-
-		LOGGER.fine("propMark Type of Proposition: " + p.getClass() + "and value "+ p.getValue());
-
-		// Base and input values are standalone and hold the values of states
-		// and sets of moves respectively
-		// Transitions always lead to base propositions, but this function will
-		// never get called on Transitions
-		if (isBase(p)){
-			LOGGER.fine("BASE FOUND");
-			LOGGER.exiting(this.getClass().getName(), "propSet");
-			return p.getValue();
-		} else if (isInput(p)){
-			LOGGER.fine("INPUT FOUND");
-			LOGGER.exiting(this.getClass().getName(), "propSet");
-			return p.getValue();
-		} else if (p instanceof Not){
-			LOGGER.fine("NOT FOUND");
-			LOGGER.exiting(this.getClass().getName(), "propSet");
-			return propMarkNegation(p);
-		} else if (p instanceof And) {
-			LOGGER.fine("AND FOUND");
-			LOGGER.exiting(this.getClass().getName(), "propSet");
-			return propMarkConjunction(p);
-		} else if (p instanceof Or){
-			LOGGER.fine("OR FOUND");
-			LOGGER.exiting(this.getClass().getName(), "propSet");
-			return propMarkDisjunction(p);
-		} else {
-			// Must be view as that is the only category left
-			LOGGER.fine("SHOULD BE VIEW");
-			Proposition prop = (Proposition) p;
-			if (!setSinceClear.contains(p)){
-				prop.setValue(propSet(p.getSingleInput()));
-				setSinceClear.add(prop);
-			}
-			LOGGER.exiting(this.getClass().getName(), "propSet");
-			return p.getValue();
-		}
-
-
+		if ((Component) p instanceof And) {
+    		return propMarkConjunction(p);
+    	}
+    	//if p is a negation
+    	if ((Component) p instanceof Not) {
+    		return propMarkNegation(p);
+    	}
+    	//if p is a disjunction
+    	if ((Component) p instanceof Or) {
+    		return propMarkDisjunction(p);
+    	}
+    	if ((Component) p instanceof Transition) {
+    		return p.getValue();
+    	}
+    	if ((Component) p instanceof Constant) {
+    		return p.getValue();
+    	}
+    	//if p is a base
+    	if (propNet.getBasePropositions().containsKey(((Proposition) p).getName())) {
+    		return p.getValue();
+    	}
+    	//if p is an action
+    	if (propNet.getInputPropositions().containsKey(((Proposition) p).getName())) {
+    		return p.getValue();
+    	}
+    	if (propNet.getInitProposition().equals(p)) {
+    		return p.getValue();
+    	}
+    	return propSet(p.getSingleInput());
 	}
-
-	private boolean isView(Component p) {
-		// Checks to see if there is an input from a connective
-		if (!(p instanceof Proposition)) {
-			return false;
-		}
-		Set<Component> components = p.getInputs();
-		for (Component component : components) {
-			if (component instanceof Transition) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private boolean isBase(Component p) {
-		// Has one single input from a Transition
-		return (p instanceof Proposition && p.getInputs().size() == 1 && p.getSingleInput() instanceof Transition);
-	}
-
-	private boolean isInput(Component p) {
-		// Has no inputs as is simply a representation of a move
-		return (p instanceof Proposition && p.getInputs().size() == 0);
-	}
-
 
 
 
