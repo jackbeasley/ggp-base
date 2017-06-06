@@ -1,6 +1,7 @@
 package org.ggp.base.player.gamer.statemachine.shrek;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -64,6 +65,7 @@ public class ShrekPropNetMachine extends StateMachine {
 			propNet = OptimizingPropNetFactory.create(description);
 			roles = propNet.getRoles();
 			ordering = getOrdering();
+			Collections.shuffle(ordering);
 		} catch (InterruptedException e) {
 			LOGGER.log(Level.SEVERE, "Prop net initialie exception", e);
 		}
@@ -354,6 +356,8 @@ public class ShrekPropNetMachine extends StateMachine {
 		components.removeAll(propNet.getBasePropositions().values());
 		components.removeAll(propNet.getInputPropositions().values());
 
+		validateOrdering(order);
+
 		return order;
 
 	}
@@ -368,7 +372,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		}
 		if (unmarked.contains(c)) {
 			tmpMarks.add(c);
-			for (Component n : c.getOutputs()) {
+			for (Component n : c.getInputs()) {
 				if(!(c instanceof Transition)){
 					visit(n, order, unmarked, tmpMarks);
 				}
@@ -378,6 +382,18 @@ public class ShrekPropNetMachine extends StateMachine {
 			order.add(0, c);
 		}
 		LOGGER.exiting(this.getClass().getName(), "visit");
+	}
+
+	private void validateOrdering(List<Component> order) {
+		Set<Component> visited = new HashSet<Component>();
+		for(Component c : order) {
+			if(!visited.containsAll(c.getInputs())) {
+				LOGGER.severe("TOPO SORT INVALID");
+				//return false;
+			}
+			visited.add(c);
+		}
+		//return true;
 	}
 
 	/* Already implemented for you */
