@@ -9,17 +9,23 @@ import org.ggp.base.util.statemachine.MachineState;
 import org.ggp.base.util.statemachine.Move;
 import org.ggp.base.util.statemachine.Role;
 import org.ggp.base.util.statemachine.StateMachine;
+import org.ggp.base.util.statemachine.cache.CachedStateMachine;
 import org.ggp.base.util.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
+import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 
 public class ShrekDepthLimitedPlayer extends StateMachineGamer {
 	List<Role> roles;
+	private StateMachine refMachine;
+
 	@Override
 	public StateMachine getInitialStateMachine() {
-		ShrekPropNetThreadSafeMachine machine = new ShrekPropNetThreadSafeMachine();
+		ShrekPropNetMachine machine = new ShrekPropNetMachine();
 		machine.initialize(getMatch().getGame().getRules());
 		roles = machine.getRoles();
+		refMachine = new CachedStateMachine(new ProverStateMachine());
+		refMachine.initialize(getMatch().getGame().getRules());
 
 		return machine;
 	}
@@ -34,13 +40,14 @@ public class ShrekDepthLimitedPlayer extends StateMachineGamer {
 	@Override
 	public Move stateMachineSelectMove(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-		StateMachine machine = getStateMachine();
 		MachineState state = getCurrentState();
 		Role role = getRole();
 		return bestMove(role, state);
 
 	}
-
+	private void println(String string){
+		System.out.println(string);
+	}
 	private Move bestMove(Role role, MachineState state)
 			throws MoveDefinitionException, TransitionDefinitionException, GoalDefinitionException
 	{
@@ -51,8 +58,35 @@ public class ShrekDepthLimitedPlayer extends StateMachineGamer {
 		Move bestMove = null;
 		int score = 0;
 
+		if((machine.getInitialState().toString()).equals(refMachine.getInitialState().toString())){
+			println("SCUCESS");
+		} else {
+			println("failrueihgot");
+		}
+
 		for(Move legalMove : moves){
+			System.out.println("checking next states");
+
 			List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, legalMove);
+			List<List<Move>> legalMovesRef = refMachine.getLegalJointMoves(state, role, legalMove);
+
+			// Loop though all sets of legal moves for each role
+			if(legalMoves.size() != legalMovesRef.size()){
+				System.out.println("legal moves are different sizes");
+			}
+			System.out.println("LegalMoves"  +legalMoves);
+			for(int i = 0; i < legalMoves.size();i++){
+				MachineState simState = machine.getNextState(state, legalMoves.get(i));
+				MachineState simStateRef = refMachine.getNextState(state, legalMovesRef.get(i));
+				if(!(simState.toString().equals(simStateRef.toString()))){
+					System.out.println("one level down simulate fails at move " + i);
+				}
+
+//				System.out.println(machine.getLegalMoves(simState, role));
+			}
+		}
+
+		for(Move legalMove : moves){
 			int result = minScore(state, role, legalMove,0);
 			if (result > score){
 				score = result;
@@ -74,10 +108,30 @@ public class ShrekDepthLimitedPlayer extends StateMachineGamer {
 
 		// Other players should have noop as legal move
 		List<List<Move>> legalMoves = machine.getLegalJointMoves(state, role, move);
+		List<List<Move>> legalMovesRef = refMachine.getLegalJointMoves(state, role, move);
 
+//		if(legalMoves.size() != legalMovesRef.size()){
+//			System.out.println("legal moves are different sizes");
+//		}
 		// Loop though all sets of legal moves for each role
+		for(int i = 0; i < legalMoves.size();i++){
+			MachineState simState = machine.getNextState(state, legalMoves.get(i));
+//			MachineState simStateRef = refMachine.getNextState(state, legalMovesRef.get(i));
+//			if(!simState.toString().equals(simStateRef.toString())){
+//				System.out.println("simulated moves fail");
+//			}
+
+			int highest = maxScore(simState, role,level+1);
+			if (highest == 0) {
+				return 0;
+			} else if (highest < score) {
+				score = highest;
+			}
+
+		}
 		for (List<Move> legalMoveSet : legalMoves) {
 			MachineState simState = machine.getNextState(state, legalMoveSet);
+
 			int highest = maxScore(simState, role,level+1);
 			if (highest == 0) {
 				return 0;
@@ -91,8 +145,15 @@ public class ShrekDepthLimitedPlayer extends StateMachineGamer {
 	private int maxScore(MachineState state, Role role,int level)
 			throws GoalDefinitionException, MoveDefinitionException, TransitionDefinitionException{
 		StateMachine machine = getStateMachine();
-		int limit = 4;
-		if(machine.isTerminal(state)) return machine.getGoal(state, role);
+		int limit = 2;
+
+		if(machine.isTerminal(state) != refMachine.isTerminal(state)){
+			System.out.println("terminal states fail");
+		}
+
+		if(machine.isTerminal(state)) {
+			return machine.getGoal(state, role);
+		}
 		if (level>=limit) {return evalfn(role,state);};
 		List<Move> moves = machine.getLegalMoves(state,role);
 		int score = 0;
