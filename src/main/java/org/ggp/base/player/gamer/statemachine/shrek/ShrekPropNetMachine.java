@@ -372,7 +372,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		}
 		if (unmarked.contains(c)) {
 			tmpMarks.add(c);
-			for (Component n : c.getInputs()) {
+			for (Component n : c.getOutputs()) {
 				if(!(c instanceof Transition)){
 					visit(n, order, unmarked, tmpMarks);
 				}
