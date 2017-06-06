@@ -30,6 +30,7 @@ import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.implementation.prover.query.ProverQueryBuilder;
 
 public class ShrekPropNetMachine extends StateMachine {
+	//TODO: clear propnet?
 
 	private static final Logger LOGGER = Logger.getLogger(ShrekPropNetMachine.class.getName());
 	static {
@@ -57,6 +58,8 @@ public class ShrekPropNetMachine extends StateMachine {
 	public void initialize(List<Gdl> description) {
 		LOGGER.entering(this.getClass().getName(), "initialize");
 		try {
+			//subgoal reordering - simplest subgoals first
+
 			propNet = OptimizingPropNetFactory.create(description);
 			roles = propNet.getRoles();
 			ordering = getOrdering();
@@ -244,8 +247,20 @@ public class ShrekPropNetMachine extends StateMachine {
 		LOGGER.exiting(this.getClass().getName(), "computeAllStates");
 	}
 
+	private void processTransitions ()
+	{
+		for (Proposition p: propNet.getBasePropositions().values())
+		{
+			Component input = p.getSingleInput();
+			if (input instanceof Transition)
+			{
+				p.setValue(input.getValue());
+			}
+		}
+	}
+
 	private void processComponents(Set<Component> toProcess) {
-		LOGGER.entering(this.getClass().getName(), "processComponents");
+		LOGGER.entering(this.getClass().getName(), "f");
 
 		LOGGER.fine(toProcess.toString());
 
@@ -263,10 +278,15 @@ public class ShrekPropNetMachine extends StateMachine {
 				}
 
 				LOGGER.fine("New Val:" + c.getValue());
+				if(!(c instanceof Transition)){
+					toProcess.addAll(c.getOutputs());
+				//	LOGGER.fine("TO PROCESS:" + toProcess.toString());
+				}
 
-				toProcess.addAll(c.getOutputs());
 			}
 		}
+		processTransitions();
+
 		LOGGER.exiting(this.getClass().getName(), "processComponents");
 	}
 
@@ -287,7 +307,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	 */
 
 	public List<Component> getOrdering() {
-		LOGGER.exiting(this.getClass().getName(), "getOrdering");
+		LOGGER.entering(this.getClass().getName(), "getOrdering");
 		// List to contain the topological ordering.
 		List<Component> order = new LinkedList<Component>();
 
@@ -301,9 +321,15 @@ public class ShrekPropNetMachine extends StateMachine {
 
 		Set<Component> tempMarks = new HashSet<Component>();
 
+		System.out.println(propNet.getPropositions().size());
+
+
+		//visit bases and inputs
 		while (!components.isEmpty()) {
-			visit(components.get(0), order, components, tempMarks);
+			Component c = components.get(0);
+			visit(c, order, components, tempMarks);
 		}
+
 
 		// Check that all components are in order
 		for (Component c : propNet.getPropositions()) {
@@ -313,11 +339,18 @@ public class ShrekPropNetMachine extends StateMachine {
 		}
 
 		LOGGER.exiting(this.getClass().getName(), "getOrdering");
+
+		//remove base and input props from ordering
+		components.removeAll(propNet.getBasePropositions().values());
+		components.removeAll(propNet.getInputPropositions().values());
+
 		return order;
 
 	}
 
 	private void visit(Component c, List<Component> order, List<Component> unmarked, Set<Component> tmpMarks) {
+		LOGGER.entering(this.getClass().getName(), "visit");
+
 		if (tmpMarks.contains(c)) {
 			LOGGER.severe("CYCLE found");
 			return;
@@ -333,6 +366,7 @@ public class ShrekPropNetMachine extends StateMachine {
 			tmpMarks.remove(c);
 			order.add(0, c);
 		}
+		LOGGER.exiting(this.getClass().getName(), "visit");
 	}
 
 	/* Already implemented for you */
@@ -350,7 +384,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	private List<Proposition> markBases(MachineState state) {
 		LOGGER.entering(this.getClass().getName(), "markBases");
 
-		LOGGER.fine("state: " + state);
+//		LOGGER.fine("state: " + state);
 
 		List<Proposition> changed = new ArrayList<Proposition>();
 
@@ -363,7 +397,7 @@ public class ShrekPropNetMachine extends StateMachine {
 
 			if (newValue != prop.getValue()) {
 				// Value has changed
-				LOGGER.fine("Setting Base Value to " + newValue);
+	//			LOGGER.fine("Setting Base Value to " + newValue);
 				prop.setValue(newValue);
 				changed.add(prop);
 			}
@@ -382,7 +416,7 @@ public class ShrekPropNetMachine extends StateMachine {
 
 		List<Proposition> changed = new ArrayList<Proposition>();
 
-		LOGGER.fine("moveSet: " + moveSet);
+//		LOGGER.fine("moveSet: " + moveSet);
 
 		List<GdlSentence> moveSents = toDoes(moveSet);
 		for (GdlSentence sent : propNet.getInputPropositions().keySet()) {
@@ -393,7 +427,7 @@ public class ShrekPropNetMachine extends StateMachine {
 			boolean newValue = moveSents.contains(sent);
 
 			if (newValue != prop.getValue()) {
-				LOGGER.fine("Setting Input Value to " + newValue);
+//				LOGGER.fine("Setting Input Value to " + newValue);
 				// Value has changed
 				prop.setValue(newValue);
 				changed.add(prop);
