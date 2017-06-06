@@ -387,10 +387,15 @@ public class ShrekPropNetMachine extends StateMachine {
 	private void validateOrdering(List<Component> order) {
 		Set<Component> visited = new HashSet<Component>();
 		for(Component c : order) {
-			if(!visited.containsAll(c.getInputs())) {
-				LOGGER.severe("TOPO SORT INVALID");
-				//return false;
+			for(Component in : c.getInputs()) {
+				if(!(in instanceof Transition)){
+					if(!visited.contains(c)) {
+						LOGGER.severe("TOPO SORT INVALID");
+						//return false;
+					}
+				}
 			}
+
 			visited.add(c);
 		}
 		//return true;
