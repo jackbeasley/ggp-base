@@ -54,6 +54,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * ordering here. Additionally you may compute the initial state here, at
 	 * your discretion.
 	 */
+	// PROBABLY RIGHT
 	@Override
 	public void initialize(List<Gdl> description) {
 		LOGGER.entering(this.getClass().getName(), "initialize");
@@ -92,6 +93,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * exactly one goal proposition true for that role, then you should throw a
 	 * GoalDefinitionException because the goal is ill-defined.
 	 */
+	// PROBABLY RIGHT
 	@Override
 	public int getGoal(MachineState state, Role role) throws GoalDefinitionException {
 		LOGGER.entering(this.getClass().getName(), "getGoal");
@@ -118,6 +120,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * setting the truth value of the INIT proposition to true, and then
 	 * computing the resulting state.
 	 */
+	// REALLY PROBABLY RIGHT
 	@Override
 	public MachineState getInitialState() {
 		LOGGER.entering(this.getClass().getName(), "getInitialState");
@@ -141,6 +144,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	/**
 	 * Computes all possible actions for role.
 	 */
+	// Probably irrelevant
 	@Override
 	public List<Move> findActions(Role role) throws MoveDefinitionException {
 		LOGGER.entering(this.getClass().getName(), "findActions");
@@ -159,6 +163,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	/**
 	 * Computes the legal moves for role in state.
 	 */
+	// PROBABLY RIGHT
 	@Override
 	public List<Move> getLegalMoves(MachineState state, Role currentRole) throws MoveDefinitionException {
 		LOGGER.entering(this.getClass().getName(), "getLegalMoves");
@@ -184,6 +189,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	/**
 	 * Computes the next state given state and the list of moves.
 	 */
+	// PROBABLY RIGHT (BUT MAYBE NOT)
 	@Override
 	public MachineState getNextState(MachineState state, List<Move> moves) throws TransitionDefinitionException {
 		LOGGER.entering(this.getClass().getName(), "getNextState");
@@ -223,6 +229,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	/*
 	 * Simply computes all states from the given machinestate and moveset
 	 */
+	// PROBABLY RIGHT
 	public void computeAllStates(MachineState state, List<Move> moveSet) {
 		LOGGER.entering(this.getClass().getName(), "computeAllStates");
 
@@ -247,6 +254,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		LOGGER.exiting(this.getClass().getName(), "computeAllStates");
 	}
 
+	// NOT SURE WHY THIS EXISTS
 	private void processTransitions ()
 	{
 		for (Proposition p: propNet.getBasePropositions().values())
@@ -259,6 +267,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		}
 	}
 
+	// PROBABLY WRONG
 	private void processComponents(Set<Component> toProcess) {
 		LOGGER.entering(this.getClass().getName(), "f");
 
@@ -306,6 +315,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	 *         set.
 	 */
 
+	// COULD DEFINITELY BE WRONG
 	public List<Component> getOrdering() {
 		LOGGER.entering(this.getClass().getName(), "getOrdering");
 		// List to contain the topological ordering.
@@ -348,6 +358,7 @@ public class ShrekPropNetMachine extends StateMachine {
 
 	}
 
+	// COULD DEFINITELY BE WRONG
 	private void visit(Component c, List<Component> order, List<Component> unmarked, Set<Component> tmpMarks) {
 		LOGGER.entering(this.getClass().getName(), "visit");
 
@@ -381,6 +392,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * markBases sets all the base propositions to match those in the given
 	 * state and returns a list of the propositions that changed
 	 */
+	// PROBABLY RIGHT
 	private List<Proposition> markBases(MachineState state) {
 		LOGGER.entering(this.getClass().getName(), "markBases");
 
@@ -411,6 +423,7 @@ public class ShrekPropNetMachine extends StateMachine {
 	 * The markInputs functions goes through the given boolean of input props
 	 * and marks them on the provided set in propNet
 	 */
+	// PROBABLY RIGHT
 	private List<Proposition> markInputs(List<Move> moveSet) {
 		LOGGER.entering(this.getClass().getName(), "markInputs");
 
