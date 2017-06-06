@@ -1,7 +1,6 @@
 package org.ggp.base.player.gamer.statemachine.shrek;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -83,7 +82,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		clearPropNet();
 		markBases(state);
 		LOGGER.exiting(this.getClass().getName(), "isTerminal");
-		return propSet(propNet.getTerminalProposition(), getBaseMap(state), null, false);
+		return propSet(propNet.getTerminalProposition());
 
 	}
 
@@ -105,8 +104,7 @@ public class ShrekPropNetMachine extends StateMachine {
 
 		// If the goal propositon is true, return the goal value, else zero
 		for (Proposition prop : legalProps) {
-			// Ok to leave moves null as goal is independent of moves
-			if (propSet(prop, getBaseMap(state), null, false)) {
+			if (propSet(prop)) {
 				LOGGER.exiting(this.getClass().getName(), "getGoal");
 				return getGoalValue(prop);
 			}
@@ -168,8 +166,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		List<Move> legalMoves = new ArrayList<Move>();
 		Set<Proposition> legalProps = propNet.getLegalPropositions().get(currentRole);
 		for (Proposition prop : legalProps) {
-			// Never visits inputs so ok to leave null
-			boolean isPropSet = propSet(prop, getBaseMap(state), null, false);
+			boolean isPropSet = propSet(prop);
 			if (isPropSet) {
 				legalMoves.add(getMoveFromProposition(prop));
 			}
@@ -205,7 +202,7 @@ public class ShrekPropNetMachine extends StateMachine {
         Set<GdlSentence> nextStateContents = new HashSet<GdlSentence>();
         for (GdlSentence s : basePropMap.keySet()) {
         	Proposition currProp = basePropMap.get(s);
-        	if (propSet(currProp.getSingleInput().getSingleInput(), getBaseMap(state), getInputMap(moves), false))
+        	if (propSet(currProp.getSingleInput().getSingleInput()))
         		nextStateContents.add(s);
         }
 
@@ -215,7 +212,7 @@ public class ShrekPropNetMachine extends StateMachine {
 //		return nextState;
 
 	}
-/*
+
 	public MachineState computeState() {
 
 		LOGGER.entering(this.getClass().getName(), "computeState");
@@ -228,7 +225,7 @@ public class ShrekPropNetMachine extends StateMachine {
 		// Creates a MachineState from the BasePropositons
 		return getStateFromBase();
 	}
-*/
+
 	/**
 	 * This should compute the topological ordering of propositions. Each
 	 * component is either a proposition, logical gate, or transition. Logical
@@ -290,23 +287,6 @@ public class ShrekPropNetMachine extends StateMachine {
 		LOGGER.exiting(this.getClass().getName(), "markBases");
 
 	}
-	private Map<Proposition, Boolean> getBaseMap(MachineState state) {
-		LOGGER.entering(this.getClass().getName(), "markBases");
-
-		Map<Proposition, Boolean> baseMap = new HashMap<Proposition, Boolean>();
-
-		for (GdlSentence sent : propNet.getBasePropositions().keySet()) {
-			// Get out previous proposition
-			Proposition prop = propNet.getBasePropositions().get(sent);
-
-			// Set prop true for values in the state, false for everything else
-			baseMap.put(prop, state.getContents().contains(sent));
-
-
-		}
-		LOGGER.exiting(this.getClass().getName(), "markBases");
-		return baseMap;
-	}
 
 	/*
 	 * The markInputs functions goes through the given boolean of input props
@@ -326,26 +306,6 @@ public class ShrekPropNetMachine extends StateMachine {
 			prop.setValue(moveSents.contains(sent));
 		}
 		LOGGER.exiting(this.getClass().getName(), "markInputs");
-	}
-
-	private Map<Proposition, Boolean> getInputMap(List<Move> moveSet) {
-		LOGGER.entering(this.getClass().getName(), "markInputs");
-
-		Map<Proposition, Boolean> inputMap = new HashMap<Proposition, Boolean>();
-
-		List<GdlSentence> moveSents = toDoes(moveSet);
-		for (GdlSentence sent : propNet.getInputPropositions().keySet()) {
-			// Get out previous proposition
-			Proposition prop = propNet.getInputPropositions().get(sent);
-
-			// Set prop true for values in the set of moves, false for
-			// everything else
-			// toDoes maps a list of moves to a list of GdlSentences
-			inputMap.put(prop, moveSents.contains(sent));
-		}
-
-		LOGGER.exiting(this.getClass().getName(), "markInputs");
-		return inputMap;
 	}
 
 	/*
@@ -374,43 +334,52 @@ public class ShrekPropNetMachine extends StateMachine {
 	 *
 	 * @param p
 	 */
-	private boolean propSet(Component p, Map<Proposition, Boolean> baseMap, Map<Proposition, Boolean> inputMap, boolean initVal) {
-		if (p instanceof And) {
-    		return propMarkConjunction(p, baseMap, inputMap, initVal);
-    	} else if (p instanceof Not) {
-    		return propMarkNegation(p, baseMap, inputMap, initVal);
-    	} else if (p instanceof Or) {
-    		return propMarkDisjunction(p, baseMap, inputMap, initVal);
-    	} else if (p instanceof Transition) {
-    		return propSet(p.getSingleInput(), baseMap, inputMap, initVal);
-    	} else if (p instanceof Constant) {
-    		return p.getValue();
-    	} else if (propNet.getBasePropositions().containsKey(((Proposition) p).getName())) {
-    		// Base
-    		return baseMap.get(p);
-    	} else if (propNet.getInputPropositions().containsKey(((Proposition) p).getName())) {
-    		// Input
-    		return inputMap.get(p);
-    	} else if (propNet.getInitProposition().equals(p)) {
-    		// Init
-    		return initVal;
+	private boolean propSet(Component p) {
+		if ((Component) p instanceof And) {
+    		return propMarkConjunction(p);
     	}
-    	return propSet(p.getSingleInput(), baseMap, inputMap, initVal);
+    	//if p is a negation
+    	if ((Component) p instanceof Not) {
+    		return propMarkNegation(p);
+    	}
+    	//if p is a disjunction
+    	if ((Component) p instanceof Or) {
+    		return propMarkDisjunction(p);
+    	}
+    	if ((Component) p instanceof Transition) {
+    		return p.getValue();
+    	}
+    	if ((Component) p instanceof Constant) {
+    		return p.getValue();
+    	}
+    	//if p is a base
+    	if (propNet.getBasePropositions().containsKey(((Proposition) p).getName())) {
+    		return p.getValue();
+    	}
+    	//if p is an action
+    	if (propNet.getInputPropositions().containsKey(((Proposition) p).getName())) {
+    		return p.getValue();
+    	}
+    	if (propNet.getInitProposition().equals(p)) {
+    		return p.getValue();
+    	}
+    	return propSet(p.getSingleInput());
 	}
 
 
-	private boolean propMarkNegation(Component p, Map<Proposition, Boolean> baseMap, Map<Proposition, Boolean> inputMap, boolean initVal) {
+
+	private boolean propMarkNegation(Component p) {
 		//should return the negation of the component before p
 		LOGGER.entering(this.getClass().getName(), "propMarkNegation");
 		LOGGER.exiting(this.getClass().getName(), "propMarkNegation");
-		return !propSet(p.getSingleInput(), baseMap, inputMap, initVal);
+		return !propSet(p.getSingleInput());
 	}
 
-	private boolean propMarkConjunction(Component p, Map<Proposition, Boolean> baseMap, Map<Proposition, Boolean> inputMap, boolean initVal) {
+	private boolean propMarkConjunction(Component p) {
 		LOGGER.entering(this.getClass().getName(), "propMarkConjunction");
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
-			if (!propSet(component, baseMap, inputMap, initVal)){
+			if (!propSet(component)){
 				LOGGER.exiting(this.getClass().getName(), "propMarkConjunction");
 				return false;
 			}
@@ -419,12 +388,12 @@ public class ShrekPropNetMachine extends StateMachine {
 		return true;
 	}
 
-	private boolean propMarkDisjunction(Component p, Map<Proposition, Boolean> baseMap, Map<Proposition, Boolean> inputMap, boolean initVal) {
+	private boolean propMarkDisjunction(Component p) {
 		LOGGER.entering(this.getClass().getName(), "propMarkDisjunction");
 
 		Set<Component> sources = p.getInputs();
 		for (Component component : sources) {
-			if (propSet(component, baseMap, inputMap, initVal)) {
+			if (propSet(component)) {
 				LOGGER.exiting(this.getClass().getName(), "propMarkDisjunction");
 				return true;
 			}

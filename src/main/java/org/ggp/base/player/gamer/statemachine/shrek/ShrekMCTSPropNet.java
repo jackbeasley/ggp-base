@@ -26,7 +26,7 @@ public class ShrekMCTSPropNet extends StateMachineGamer {
 
 	@Override
 	public StateMachine getInitialStateMachine() {
-		//StateMachine machine = new CachedStateMachine(new ProverStateMachine());
+//		StateMachine machine = new CachedStateMachine(new ProverStateMachine());
 //		StateMachine machine = new ShrekPropNetThreadSafeMachine();
 		StateMachine machine = new ShrekPropNetMachine();
 		return machine;
@@ -35,8 +35,8 @@ public class ShrekMCTSPropNet extends StateMachineGamer {
 	@Override
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-		this.es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-		 //this.es = Executors.newFixedThreadPool(1);
+//		 this.es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		 this.es = Executors.newFixedThreadPool(1);
 
 	}
 
