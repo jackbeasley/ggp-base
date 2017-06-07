@@ -58,7 +58,7 @@ public class ShrekMCTSPropNet extends StateMachineGamer {
 		StateMachine machine = getStateMachine();
 		List<Move> moves = machine.getLegalMoves(state,role);
 
-		MCTSBestMoveCalculator bestMoveCalculator = new MCTSBestMoveCalculator(machine, state, startTime, role, moves,this.es);
+		MCTSBestMoveCalculator bestMoveCalculator = new MCTSBestMoveCalculator(machine, state, startTime, role, moves,this.es,8);
 		return bestMoveCalculator.call().getMove();
 	}
 

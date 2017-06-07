@@ -30,17 +30,18 @@ public class MCTSBestMoveCalculator implements Callable<BestMove> {
 	int depthCharges;
 
 	private static final int WINNING_SCORE = 100;
-	private static final Duration TIME_TO_DECIDE = Duration.ofSeconds(9);
+	private Duration TIME_TO_DECIDE;
 	private static final int DEPTH_LIMIT = 2;
 
 	public MCTSBestMoveCalculator(StateMachine machine, MachineState state , Instant startTime, Role role,
-			List<Move> moves,ExecutorService es) {
+			List<Move> moves,ExecutorService es,long seconds) {
 		this.role = role;
 		this.state = state;
 		this.startTime = startTime;
 		this.machine = machine;
 		this.moves = moves;
 		this.es = es;
+		TIME_TO_DECIDE = Duration.ofSeconds(seconds);
 	}
 
 	@Override
